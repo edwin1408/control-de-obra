@@ -1,0 +1,1987 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#17365d">
+<title>Control de Obra</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:#eef1f5;color:#1f2937}
+body{overflow-x:hidden}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.topbar{height:58px;background:#17365d;color:#fff;display:flex;align-items:center;padding:0 16px;gap:15px}
+.topBuilding{font-size:20px;font-weight:900;color:#17365d;background:#ffd966;border:2px solid #17365d;border-radius:7px;padding:5px 12px;line-height:1.1;box-shadow:0 1px 0 #0002}
+.logo{font-weight:700;font-size:19px}
+.container{max-width:1500px;margin:auto;padding:14px}
+.hidden{display:none!important} #modalBg.hidden{display:none!important}
+.btn{border:0;border-radius:6px;padding:9px 13px;background:#17365d;color:white;font-weight:600}
+.btn.green{background:#f2c94c;color:#17365d}.btn.gray{background:#e5e7eb;color:#374151}.btn.red{background:#b42318}.project-name{font-size:22px;font-weight:900;color:#17365d;white-space:nowrap}.btn:disabled{opacity:.45;cursor:not-allowed}
+input,select{border:1px solid #b9c1cc;border-radius:5px;padding:9px;background:white}
+.home-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.buildings{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.card{background:#fff;border:1px solid #d4d9e1;border-radius:8px;padding:14px}
+.building-name{font-size:18px;font-weight:700}
+ .building-color-chip{display:inline-flex;align-items:center;gap:6px;margin-left:7px;padding:2px 7px;border-radius:999px;border:1px solid #cbd5e1;font-size:11px;font-weight:800;vertical-align:2px;background:#fff}.building-color-dot{width:13px;height:13px;border-radius:50%;display:inline-block;border:1px solid #94a3b8}.building-color-picker{margin-top:10px;padding:10px;border:1px solid #d1d5db;border-radius:8px;background:#f8fafc}.building-color-title{font-size:12px;font-weight:800;color:#475569;margin-bottom:6px}.building-color-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}.building-color-swatch{height:30px;border:1px solid #cbd5e1;border-radius:6px;padding:0;box-shadow:0 1px 2px #0001}@media(max-width:700px){.building-color-grid{grid-template-columns:repeat(6,1fr)}.building-color-swatch{height:28px}}
+.small{font-size:12px;color:#6b7280}
+.actions{display:flex;gap:7px;margin-top:13px;flex-wrap:wrap}
+.empty{background:white;border:1px dashed #b9c1cc;padding:30px;text-align:center;border-radius:8px;color:#6b7280}
+.formline{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+.formline input{flex:1;min-width:180px}
+
+/* MATRIX */
+/* ENCABEZADO FIJO DE LA MATRIZ: queda fuera del table para que no desaparezca al llegar al final */
+.matrix-head-scroll{position:sticky;top:0;z-index:500;width:100%;overflow-x:auto;overflow-y:hidden;background:#fff;border-bottom:1px solid #9ca3af;-ms-overflow-style:none;scrollbar-width:none}
+.matrix-head-scroll::-webkit-scrollbar{display:none}
+.matrix-head-table{border-collapse:collapse;table-layout:fixed;min-width:650px;width:max-content;background:#fff;box-sizing:border-box}
+.matrix-head-table th{border:1px solid #9ca3af;box-sizing:border-box}
+.matrix-head-table .conceptcol{width:155px;min-width:155px;position:sticky;left:0;z-index:520;background:#fff2b2!important}
+.matrix-head-table .col-dept{width:38px}.matrix-head-table .col-sep{width:9px}
+.matrix-head-table .level{width:auto;background:#ffe98a;font-size:20px;font-weight:800;height:34px;text-align:center;line-height:34px}
+.matrix-head-table .dept{width:38px;min-width:38px;background:#fff2b2;font-size:12px;height:22px;text-align:center}
+.matrix-head-table .level-sep{width:9px;min-width:9px;background:#fff2b2!important;border-left:2px solid #eef1f5!important;border-right:2px solid #eef1f5!important;padding:0!important}
+.matrix-scroll .matrix>thead{display:none}
+@media(max-width:700px){
+ /* IMPORTANTE: encabezado y celdas deben usar exactamente el mismo ancho.
+    Antes el encabezado usaba 34px y la tabla inferior 38px, provocando
+    un desfase cada vez mayor al desplazarse horizontalmente. */
+ .matrix-head-table,.matrix{width:726px!important;min-width:726px!important;max-width:none!important}
+ .matrix-head-table .conceptcol,.matrix .conceptcol{width:155px!important;min-width:155px!important;max-width:155px!important}
+ .matrix-head-table .col-dept,.matrix .col-dept{min-width:34px!important}
+ .matrix-head-table .col-sep,.matrix .col-sep{width:9px!important;min-width:9px!important;max-width:9px!important}
+ .matrix-head-table .dept,.matrix .dept,.matrix td.data-cell{min-width:34px!important;box-sizing:border-box}
+ .matrix-head-table .level-sep,.matrix .level-sep,.matrix .sep-cell{width:9px!important;min-width:9px!important;max-width:9px!important;box-sizing:border-box}
+ .matrix-head-table .level{font-size:18px;height:34px;line-height:34px}
+}
+
+.matrix-shell{background:#fff;border:1px solid #9ea5ad;box-shadow:0 2px 8px #0001}
+.matrix-toolbar{padding:10px;border-bottom:1px solid #c8cdd3;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.matrix-scroll{overflow-x:auto;overflow-y:clip;-webkit-overflow-scrolling:touch;max-height:none;position:relative;isolation:isolate}
+.matrix{border-collapse:collapse;table-layout:fixed;min-width:650px;width:max-content;background:#fff;box-sizing:border-box}
+.matrix th,.matrix td{border:1px solid #9ca3af}
+.matrix .conceptcol{width:155px;min-width:155px;position:sticky;left:0;z-index:8;background:#f4f4f4;overflow:hidden;box-shadow:3px 0 4px -4px #0008}
+.matrix col.col-concept{width:155px}.matrix col.col-dept{width:38px}.matrix col.col-sep{width:9px}
+.matrix .dept{width:38px;min-width:38px;text-align:center}.matrix .level-sep{width:9px;min-width:9px;background:#eef1f5!important;border-left:2px solid #eef1f5!important;border-right:2px solid #eef1f5!important;padding:0!important}.matrix .sep-cell{width:9px;min-width:9px;background:#eef1f5!important;border-left:2px solid #eef1f5!important;border-right:2px solid #eef1f5!important;padding:0!important;cursor:default}
+/* La columna de conceptos queda fija; las columnas de departamentos se deslizan. */
+.matrix tbody td:nth-child(1){
+  position:sticky;left:0;z-index:100;
+  background:#b9d8f0!important;
+  border-right:2px solid #6f7882;
+}
+.matrix tbody td.category-title:nth-child(1){
+  background:#8eb9d9!important;
+  z-index:110;
+}
+.matrix thead th:nth-child(1){
+  position:sticky;left:0;z-index:200;background:#f4f4f4!important;
+}
+/* Encabezado de niveles y departamentos fijo al desplazarse verticalmente. */
+.matrix thead{position:sticky;top:0;z-index:300}
+.matrix thead th{position:sticky;background:#f4f4f4!important}
+.matrix thead tr:first-child th{top:0;z-index:350}
+.matrix thead tr:nth-child(2) th{top:25px;z-index:340}
+.matrix thead tr:first-child th.conceptcol{z-index:400}
+.matrix thead tr:first-child th.level-sep{z-index:360}
+.matrix thead tr:nth-child(2) th.level-sep{z-index:345}
+.level{background:#f4f4f4;font-size:14px;font-weight:700;height:25px;text-align:center}
+.depthead{background:#fff;font-size:12px;height:22px;text-align:center}
+.catcell{background:#b9d8f0;color:#111;font-size:7px;text-transform:uppercase;vertical-align:top;padding:3px 2px;position:sticky;left:0;z-index:6;overflow:hidden;white-space:nowrap;text-overflow:clip}
+.conceptcell{background:#b9d8f0;font-size:12px;padding:3px 3px;line-height:1.05;position:sticky;left:0;z-index:6;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.category-row td{height:23px}
+.category-row{cursor:default}
+.category-row:active{cursor:default}
+.category-drag-handle{display:inline-block;margin-right:4px;font-size:12px;font-weight:900;opacity:.65;cursor:grab;user-select:none}
+.category-row.dragging{opacity:.38}
+.category-row.category-drop-target td{border-top:3px solid #17365d!important}
+body.category-dragging{user-select:none!important}
+body.category-dragging *{user-select:none!important}
+.category-drag-float{position:fixed;z-index:10000;left:12px;top:12px;background:#17365d;color:#fff;padding:7px 11px;border-radius:8px;box-shadow:0 6px 18px #0004;font-size:12px;font-weight:700;pointer-events:none;display:none}
+.category-title{font-weight:700;font-size:11px;background:#8eb9d9!important}.category-banner{font-size:10px;text-transform:uppercase}
+.category-actions{font-size:10px;text-align:right;background:#8eb9d9!important}
+.category-actions button{font-size:10px;padding:2px 5px;border:0;background:#ffffff99;border-radius:3px}
+.concept-name{font-weight:700;font-size:12px}.concept-tools{float:right;display:flex;gap:2px;margin-left:4px}.concept-tools button{border:0;background:#ffffffaa;border-radius:3px;padding:1px 3px;font-size:11px;line-height:1;cursor:pointer}.concept-tools button:hover{background:#fff}
+.concept-desc{font-style:italic;margin-left:18px}
+.data-cell{height:24px;text-align:center;font-size:11px;padding:0;background:#fff;cursor:pointer;vertical-align:middle}
+.data-cell{white-space:nowrap;overflow:hidden;text-overflow:clip}
+.data-cell[contenteditable="true"]:focus{outline:2px solid #2b78c5;outline-offset:-2px;background:#f7fbff}
+.data-cell.green{background:#c6efce}
+.data-cell.yellow{background:#fff2cc}
+.data-cell.orange{background:#fce4d6}
+.data-cell.gray{background:#e7e6e6;color:#666}
+.data-cell:empty:after{content:"";display:block;min-height:26px}
+.add-concept-row td{background:#d9d9d9;height:34px}
+.add-concept-row input{width:100%;border:0;border-radius:0;padding:6px;background:#fafafa}
+.add-concept-row button{border:0;background:#17365d;color:#fff;padding:5px 8px;border-radius:4px}
+.number{font-weight:700;margin-right:5px}
+
+/* status menu */
+.status-menu{
+ position:fixed;z-index:1000;background:#fff;border:1px solid #aeb6c0;
+ border-radius:8px;box-shadow:0 8px 25px #0003;padding:6px;min-width:170px;
+ max-width:min(320px,calc(100vw - 16px));
+ max-height:calc(100vh - 16px);
+ overflow-y:auto;overflow-x:hidden;
+ -webkit-overflow-scrolling:touch;
+ overscroll-behavior:contain;
+ touch-action:pan-y;
+}
+.status-option{
+ display:flex;align-items:center;gap:8px;width:100%;border:0;background:#fff;
+ padding:9px 10px;text-align:left;border-radius:5px;font-size:13px;
+}
+.status-option:hover{background:#f1f5f9}
+.status-dot{width:13px;height:13px;border-radius:3px;display:inline-block;border:1px solid #999;flex:none}
+.status-empty{color:#6b7280}
+.status-confirm{position:fixed;z-index:1100;background:#fff;border:2px solid #17365d;border-radius:8px;box-shadow:0 8px 25px #0004;padding:9px 10px;min-width:205px;max-width:270px}
+.status-confirm-text{font-size:12px;font-weight:800;color:#1f2937;line-height:1.25;margin-bottom:8px}
+.status-confirm-actions{display:flex;gap:6px;justify-content:flex-end}
+.status-confirm-actions button{border:0;border-radius:5px;padding:6px 10px;font-size:12px;font-weight:800;cursor:pointer}
+.status-confirm-actions .ok{background:#17365d;color:#fff}
+.status-confirm-actions .cancel{background:#e5e7eb;color:#374151}
+.category-filter-wrap{position:relative;display:inline-block}
+.category-filter-btn{border:0;background:#fff2b2;color:#17365d;border:1px solid #c9a900;border-radius:4px;padding:3px 6px;font-size:11px;font-weight:800;line-height:1;white-space:nowrap}
+.category-filter-btn:hover{background:#ffe98a}
+.category-filter-menu{position:fixed;z-index:1200;background:#fff;border:1px solid #aeb6c0;border-radius:8px;box-shadow:0 8px 25px #0003;padding:7px;min-width:230px;max-width:300px;max-height:70vh;overflow:auto}
+.category-filter-menu .filter-head{font-weight:800;font-size:12px;padding:4px 5px 7px;border-bottom:1px solid #e5e7eb;margin-bottom:5px}
+.category-filter-menu .filter-actions{display:flex;gap:5px;margin-bottom:6px}
+.category-filter-menu .filter-actions button{flex:1;border:0;background:#e5e7eb;color:#374151;border-radius:5px;padding:5px 6px;font-size:11px;font-weight:700}
+.category-filter-item{display:flex;align-items:center;gap:7px;padding:7px 5px;border-radius:5px;font-size:12px;font-weight:700}
+.category-filter-item:hover{background:#f1f5f9}
+.category-filter-item input{margin:0;accent-color:#17365d}
+.category-action-menu{position:fixed;z-index:1200;background:#fff;border:1px solid #aeb6c0;border-radius:8px;box-shadow:0 8px 25px #0003;padding:6px;min-width:175px}
+.category-action-menu button{display:flex;align-items:center;gap:8px;width:100%;border:0;background:#fff;padding:8px 10px;text-align:left;border-radius:5px;font-size:12px}
+.category-action-menu button:hover{background:#f1f5f9}
+.category-action-menu button.danger{color:#b42318}
+.category-dots{border:0;background:#ffffffaa;border-radius:4px;padding:1px 5px;font-size:14px;line-height:1;cursor:pointer;font-weight:900}
+.category-dots:hover{background:#fff}
+.status-manager-list{display:flex;flex-direction:column;gap:7px;margin-top:10px;max-height:280px;overflow:auto}
+.status-manager-row{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:8px;padding:7px;border:1px solid #d9dee7;border-radius:6px}
+
+.base-color-picker{margin-top:3px;background:#f8fafc;border:1px solid #d7dde5;border-radius:10px;padding:8px}.base-color-current{display:flex;align-items:center;justify-content:space-between;gap:7px;font-size:10px;color:#4b5563;font-weight:700;margin-bottom:7px}.base-color-preview{width:30px;height:24px;border:1px solid #8f98a3;border-radius:5px;display:inline-block;box-shadow:inset 0 0 0 1px rgba(255,255,255,.45)}.base-color-native{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}.base-color-title{font-size:10px;font-weight:800;color:#596273;margin:5px 0 4px}.base-color-grid{display:grid;grid-template-columns:repeat(8,minmax(18px,1fr));gap:4px}.base-color-swatch{height:22px;min-width:18px;border:1px solid #aab2bd;border-radius:4px;padding:0;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}.base-color-swatch:active{transform:scale(.94)}.base-color-custom{width:100%;margin-top:7px;border:1px solid #b8c0ca;background:#fff;border-radius:6px;padding:6px;font-weight:700;color:#334155}.base-color-custom:active{background:#eef2f7}@media(max-width:700px){.base-color-grid{grid-template-columns:repeat(8,minmax(16px,1fr))}.base-color-swatch{height:20px}.base-color-picker{padding:6px}}
+.color-input{width:40px;height:34px;padding:2px}
+
+/* modal */
+.modal-bg{position:fixed;inset:0;background:#0008;display:flex;align-items:center;justify-content:center;padding:15px;z-index:20000}
+.modal{position:relative;z-index:20001;background:white;border-radius:9px;padding:18px;width:min(500px,100%);box-shadow:0 10px 35px #0005}
+.modal h3{margin-top:0}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:15px}
+
+@media(max-width:700px){
+ .topbar{height:52px;padding:0 11px}.logo{font-size:17px}
+ .container{padding:8px}
+ .home-head{align-items:stretch;flex-direction:column;gap:8px}
+ .home-head .btn{width:100%}
+ .matrix-toolbar{position:static}
+ .matrix-scroll{max-height:none;overflow-x:auto;overflow-y:clip}
+ .matrix .conceptcol{width:155px;min-width:155px;left:0}
+ .matrix tbody td:nth-child(1){position:sticky;left:0;z-index:100;background:#b9d8f0!important;border-right:2px solid #6f7882}
+ .matrix tbody td.category-title:nth-child(1){background:#8eb9d9!important}
+ .matrix thead th:nth-child(1){position:sticky;left:0;z-index:200;background:#eef2f7!important}
+ .matrix thead tr:first-child th{top:0} .matrix thead tr:nth-child(2) th{top:25px}
+ .matrix col.col-concept{width:155px}.matrix col.col-dept{width:34px}.matrix col.col-sep{width:9px}
+ .matrix .dept{width:34px;min-width:34px}
+ .level{font-size:12px}
+ .conceptcell{font-size:11px;padding-left:3px;padding-right:3px}
+ .category-banner{font-size:9px}
+ .data-cell{font-size:10px;height:22px}
+}
+.category-options{display:grid;grid-template-columns:1fr 1.25fr;gap:10px;margin-top:4px}.category-options label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:#4b5563;font-weight:700}.category-options select{width:100%;min-height:38px}.category-options .color-input{width:100%;height:38px;padding:2px}@media(max-width:700px){.category-options{grid-template-columns:1fr 1fr}.category-options label{font-size:11px}}
+.add-concept-row .color-input{width:30px;height:28px;padding:1px;flex:none}
+.add-concept-row td{overflow:hidden}
+
+/* Resumen por departamento */
+.summary-overlay{position:fixed;inset:0;z-index:25000;background:#eef1f5;overflow:auto}
+.summary-bar{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;background:#173b63;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.summary-bar strong{font-size:16px;flex:1;min-width:180px}
+.summary-paper{max-width:1200px;margin:0 auto;padding:14px}
+.summary-building-title{margin:0 0 12px;padding:12px 14px;background:#fff;border:1px solid #cbd5e1;border-radius:12px;text-align:center;color:#173b63;font-size:30px;line-height:1.1;font-weight:900;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.summary-cards{display:grid;grid-template-columns:repeat(4,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+.summary-card{background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.summary-card .label{font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase}.summary-card .value{font-size:22px;font-weight:800;margin-top:3px;color:#173b63}
+.summary-section{background:#fff;border:1px solid #cbd5e1;border-radius:8px;margin-bottom:14px;overflow:hidden}
+.summary-section h3{margin:0;padding:10px 12px;background:#fff2b3;color:#1f2937;font-size:14px;border-bottom:1px solid #cbd5e1}
+.summary-scroll{overflow:auto}.summary-table{border-collapse:collapse;width:max-content;min-width:100%;font-size:11px}.summary-table th,.summary-table td{border:1px solid #cbd5e1;padding:6px 7px;text-align:center;white-space:nowrap}.summary-table th{background:#f8fafc;font-weight:800;position:sticky;top:0;z-index:1}.summary-table th:first-child,.summary-table td:first-child{text-align:left;position:sticky;left:0;background:#fff;z-index:2;font-weight:800}.summary-table th:first-child{background:#f8fafc;z-index:3}.summary-total{font-weight:800;background:#e8eef5!important}.summary-ok{background:#c6efce}.summary-warn{background:#fff2cc}.summary-no{background:#f4cccc}.summary-muted{color:#64748b}.summary-num{font-size:13px;font-weight:800}.summary-zero{color:#5b6168;font-size:13px;font-weight:800}.summary-status{font-weight:800}.summary-note{font-size:11px;color:#64748b;margin:8px 2px 14px}
+@media(max-width:700px){.summary-building-title{font-size:27px;padding:10px 12px}.level-summary-building-title{font-size:27px;padding:10px 12px}.summary-paper{padding:9px}.summary-cards{grid-template-columns:repeat(2,minmax(130px,1fr));gap:7px}.summary-card{padding:9px}.summary-card .value{font-size:19px}.summary-bar{padding:8px}.summary-bar strong{font-size:14px}.summary-table{font-size:10px}.summary-table th,.summary-table td{padding:5px 6px}}
+
+/* Resumen por niveles: categorías una debajo de otra; niveles en columnas y estatus en filas. */
+.level-summary-paper{max-width:1200px;margin:0 auto;padding:14px;}
+.level-summary-card{margin-bottom:16px;background:#fff;border:1px solid #cbd5e1;border-radius:12px;overflow:hidden;}
+.level-summary-title{padding:12px 14px;background:#e5e7eb;color:#1f2937;font-size:20px;font-weight:900;}
+.level-summary-level-scroll{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.level-columns-table{width:100%;min-width:650px;border-collapse:collapse;}
+.level-columns-table th,.level-columns-table td{border:1px solid #cbd5e1;padding:9px 10px;text-align:center;white-space:nowrap;}
+.level-columns-table th:first-child,.level-columns-table td:first-child{text-align:left;position:sticky;left:0;z-index:2;background:#fff;}
+.level-columns-table thead th{background:#e7eef5;color:#173b63;font-weight:900;}
+.level-columns-table thead th:not(:first-child){min-width:105px;}
+.level-columns-table tbody tr:last-child td{background:#dfe8f2;font-weight:900;}
+.level-columns-table .level-summary-zero{color:#777;}
+.level-columns-table .level-summary-number{font-weight:700;}
+@media(max-width:700px){
+  .level-summary-title{font-size:18px;}
+  .level-columns-table{min-width:610px;}
+  .level-columns-table th,.level-columns-table td{padding:8px 7px;font-size:13px;}
+  .level-columns-table thead th:not(:first-child){min-width:90px;}
+}
+
+</style>
+
+<style>
+.mini-edit{
+  border:0;
+  background:transparent;
+  color:#4d5663;
+  font-size:14px;
+  padding:0 2px;
+  margin-left:3px;
+  cursor:pointer;
+  line-height:1;
+}
+.mini-edit:hover{color:#173b63}
+</style>
+
+
+<style>
+ .preview-screen{position:fixed;inset:0;z-index:99999;background:#e5e7eb;overflow:hidden}.preview-bar{position:absolute;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;gap:10px;padding:9px 12px;background:#173b63;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2)}.preview-bar strong{flex:1}.preview-paper{position:absolute;top:52px;left:0;right:0;bottom:0;background:#fff;margin:0;padding:18px;overflow:hidden}.preview-paper h2{text-align:center;margin:0;font-size:20px}.preview-sub{text-align:center;color:#68727e;font-size:11px;margin:3px 0 12px}.preview-grid{display:block;width:100%;height:calc(100% - 58px);overflow:hidden;border:1px solid #8d969f} .preview-level-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;width:100%;height:100%;overflow:auto;background:#fff;border:1px solid #8d969f}
+.preview-level-block{min-width:0;min-height:0;overflow:auto;border-right:2px solid #7b8794;border-bottom:2px solid #7b8794}
+.preview-level-block:nth-child(2n){border-right:0}.preview-level-block:nth-child(n+3){border-bottom:0}
+.preview-level-table{border-collapse:collapse;width:100%;table-layout:fixed;font-size:8px}
+.preview-level-table th,.preview-level-table td{border-right:1px solid #8d969f;border-bottom:1px solid #8d969f;padding:2px 3px;text-align:center;vertical-align:middle;height:22px;line-height:18px;box-sizing:border-box;overflow:hidden}
+.preview-level-table .preview-level-title{background:#ffe98a;font-weight:800;font-size:11px;height:24px}
+.preview-level-table .preview-dept-head{background:#fff2b2;font-weight:800}
+.preview-level-table .preview-concept-col{width:46%;text-align:left}
+.preview-level-table .preview-dept-col{width:13.5%}
+.preview-level-table .preview-concept-cell{position:static!important;width:auto!important;min-width:0!important;max-width:none!important;box-shadow:none!important;text-align:left;white-space:nowrap;text-overflow:ellipsis}
+.preview-level-table .preview-cat td.preview-concept-cell{font-weight:800;text-transform:uppercase}
+.preview-level-table .preview-concept{font-weight:600;font-size:10px}
+.preview-level-table .preview-add-row td{background:#d9d9d9!important;color:#5f6368;font-style:italic;height:22px!important}
+@media(max-width:700px){.preview-level-table{font-size:7px}.preview-level-table th,.preview-level-table td{padding:2px}.preview-level-table .preview-concept{font-size:9px}.preview-level-table .preview-level-title{font-size:10px}}
+.preview-move{width:100%;height:100%;overflow:auto;-webkit-overflow-scrolling:touch}.preview-table{border-collapse:collapse;table-layout:fixed;width:890px;min-width:890px;font-size:8px}.preview-table th,.preview-table td{border-right:1px solid #8d969f;border-bottom:1px solid #8d969f;padding:2px 3px;text-align:center;vertical-align:middle;height:22px;line-height:18px;box-sizing:border-box;overflow:hidden}.preview-table th{background:#fff2b2;font-weight:700;white-space:nowrap}.preview-table tr:first-child th{border-top:0}.preview-table th.preview-concept-head,.preview-table td.preview-concept-cell{position:sticky;left:0;z-index:10;width:120px!important;min-width:120px!important;max-width:120px!important;text-align:left;background-clip:padding-box;box-shadow:3px 0 5px rgba(0,0,0,.16)}.preview-table th.preview-concept-head{z-index:30;background:#fff2b2}.preview-concept-cell{white-space:nowrap;text-overflow:ellipsis}.preview-cat td{height:22px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.preview-cat td.preview-concept-cell{font-weight:800;text-transform:uppercase}.preview-table .preview-dept{width:43px;min-width:43px;max-width:43px}.preview-table .preview-sep{width:9px!important;min-width:9px!important;max-width:9px!important;background:#fff2b2!important;border:0!important;padding:0!important}.preview-level{background:#ffe98a!important;font-weight:700;text-align:center;font-size:10px;height:22px!important}.preview-concept{font-weight:600;font-size:11px}.preview-add-row td{background:#d9d9d9!important;color:#5f6368;font-style:italic;height:22px!important}.preview-foot{text-align:right;color:#68727e;font-size:9px;margin-top:8px}.preview-table td.status-long{white-space:normal;line-height:14px;height:auto;min-height:22px}@media(max-width:700px){.preview-paper{padding:10px}.preview-bar{padding:7px}.preview-bar .btn{font-size:11px;padding:7px 8px}.preview-table th.preview-concept-head,.preview-table td.preview-concept-cell{width:120px;min-width:120px;max-width:120px}.preview-table .preview-dept{width:43px;min-width:43px;max-width:43px}}.expanded-preview{position:fixed;inset:0;z-index:100000;background:#eef1f5;overflow:hidden;touch-action:none}.expanded-preview.landscape-mode{width:100vw;height:100vh}.expanded-bar{height:52px;box-sizing:border-box;display:flex;align-items:center;gap:8px;padding:6px 8px;background:#173b63;color:#fff}.expanded-bar strong{flex:1;text-align:center;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.expanded-zoom{display:flex;align-items:center;gap:5px}.expanded-zoom .btn{min-width:38px;padding:8px 9px;font-size:18px;line-height:1}.expanded-zoom-value{min-width:52px;text-align:center;font-size:12px;font-weight:800}.expanded-stage{height:calc(100% - 52px);overflow:auto;padding:10px;box-sizing:border-box;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y pinch-zoom}.expanded-table-wrap{position:relative;width:max-content;min-width:max-content;margin:0}.expanded-table-wrap table{display:table;transform-origin:top left;transform:scale(1);margin:0}@media(max-width:700px){.expanded-bar .btn{font-size:11px;padding:7px 8px}.expanded-bar strong{font-size:13px}.expanded-zoom .btn{min-width:34px;padding:7px 8px;font-size:17px}.expanded-zoom-value{min-width:46px;font-size:11px}}@media print{.preview-bar{display:none}.preview-screen{position:static;background:#fff;overflow:visible}.preview-paper{position:static;overflow:visible;padding:0}.preview-grid{height:auto;overflow:visible}.preview-fixed{overflow:visible}.preview-move{overflow:visible}.preview-paper{box-shadow:none}}
+
+/* Resumen compacto por niveles */
+.level-summary-overlay{position:fixed;inset:0;z-index:26000;background:#eef1f5;overflow:auto}
+.level-summary-bar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;background:#173b63;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.level-summary-bar strong{font-size:16px;flex:1;min-width:180px}
+.level-summary-paper{max-width:1400px;margin:0 auto;padding:12px}
+.level-summary-building-title{margin:0 0 12px;padding:12px 14px;background:#fff;border:1px solid #c8c8c8;border-radius:12px;text-align:center;color:#173b63;font-size:30px;line-height:1.1;font-weight:900;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.level-summary-card{background:#fff;border:1px solid #c8c8c8;border-radius:10px;overflow:hidden;margin-bottom:12px;break-inside:avoid;page-break-inside:avoid}
+.level-summary-title{font-weight:900;font-size:16px;padding:10px 12px;background:#e7e6e6;border-bottom:1px solid #c8c8c8;text-transform:uppercase}
+.level-summary-wrap{overflow:auto;-webkit-overflow-scrolling:touch}
+.level-summary-table{border-collapse:collapse;width:max-content;min-width:100%;font-size:12px}
+.level-summary-table th,.level-summary-table td{border:1px solid #c8c8c8;padding:4px 3px;text-align:center;white-space:nowrap}
+.level-summary-table th{background:#eef3f8;color:#173b63;font-weight:900}
+.level-summary-table th:first-child,.level-summary-table td:first-child{position:sticky;left:0;z-index:2;text-align:left;background:#fff;font-weight:900}
+.level-summary-table th:first-child{background:#eef3f8;z-index:3}
+.level-summary-table .level-row td:first-child{background:#f8fafc;color:#173b63}
+.level-summary-table .level-total td{font-weight:900;background:#e8eef5}
+.level-summary-number{font-size:13px;font-weight:900}
+.level-summary-zero{color:#7a8087}
+.level-summary-grid{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #c8c8c8}
+.level-summary-level-card{min-width:0;border-right:1px solid #c8c8c8;border-bottom:1px solid #c8c8c8;background:#fff}
+.level-summary-level-card:nth-child(2n){border-right:0}
+.level-summary-level-card:nth-child(n+3){border-bottom:0}
+.level-summary-level-title{padding:9px 10px;background:#eef3f8;color:#173b63;font-size:15px;font-weight:900;text-align:center;border-bottom:1px solid #c8c8c8}
+.level-summary-level-scroll{overflow-x:hidden;overflow-y:visible;-webkit-overflow-scrolling:touch}
+.level-summary-concept-table{border-collapse:collapse;width:100%;min-width:0;table-layout:fixed;font-size:12px}
+.level-summary-concept-table th,.level-summary-concept-table td{border-bottom:1px solid #d5d9de;padding:7px 6px;white-space:normal;overflow-wrap:anywhere;word-break:break-word}
+.level-summary-concept-table th:first-child,.level-summary-concept-table td:first-child{width:31%}
+.level-summary-concept-table th:not(:first-child),.level-summary-concept-table td:not(:first-child){width:13.8%;text-align:center}
+.level-summary-concept-table th{background:#f7f9fb;color:#173b63;font-weight:900;text-align:left}
+.level-summary-concept-table th:last-child,.level-summary-concept-table td:last-child{text-align:center;width:80px}
+.level-summary-concept-table td:first-child{font-weight:700;text-align:left}
+.level-summary-level-total td{background:#e8eef5!important;font-weight:900;border-bottom:0}
+.level-summary-grand{padding:9px 10px;background:#e8eef5;border-top:1px solid #c8c8c8;font-weight:900;color:#173b63}
+.level-summary-grand-list{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:5px;color:#26384a;font-weight:700}
+.level-summary-grand-list span{white-space:nowrap}
+@media(max-width:700px){.level-summary-paper{padding:6px}.level-summary-bar{padding:7px;gap:6px}.level-summary-bar strong{font-size:13px}.level-summary-grid{grid-template-columns:1fr 1fr}.level-summary-level-title{font-size:13px;padding:8px 5px}.level-summary-concept-table{font-size:9.5px;table-layout:fixed}.level-summary-concept-table th,.level-summary-concept-table td{padding:5px 3px;line-height:1.15}.level-summary-concept-table th:first-child,.level-summary-concept-table td:first-child{width:28%}.level-summary-concept-table th:not(:first-child),.level-summary-concept-table td:not(:first-child){width:14.4%}.level-summary-concept-table th{font-size:9.5px}.level-summary-number{font-size:10.5px}.level-summary-grand{font-size:11px}.level-summary-grand-list{gap:4px 8px}}
+
+
+.level-summary-wide-card{overflow:visible;}
+.level-summary-zoom-hint{font-size:10px;color:#64748b;padding:5px 9px;background:#f8fafc;border-bottom:1px solid #d5d9de;text-align:center;}
+.level-summary-touch{overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y pinch-zoom;overscroll-behavior:contain;}
+.level-summary-table{min-width:680px;width:100%;table-layout:fixed;}
+.level-summary-table .level-group-head{background:#dfe9f3;color:#173b63;font-weight:900;text-align:center;}
+.level-summary-table .dept-subhead{background:#f1f5f9;color:#173b63;font-weight:900;font-size:11px;}
+.level-summary-table th:first-child,.level-summary-table td:first-child{min-width:72px;width:72px;}
+.level-summary-table th:not(:first-child):not(:last-child),.level-summary-table td:not(:first-child):not(:last-child){min-width:32px;width:auto;}
+.level-summary-table th:last-child,.level-summary-table td:last-child{min-width:48px;width:48px;}
+.level-summary-status-name{white-space:normal!important;overflow-wrap:anywhere;}
+.level-summary-status-total{font-weight:900;}
+
+@media(max-width:700px){.level-summary-paper{padding:6px}.level-summary-bar{padding:8px}.level-summary-bar strong{font-size:14px}.level-summary-table{font-size:9.5px;min-width:640px}.level-summary-table th,.level-summary-table td{padding:3px 2px}.level-summary-table th:first-child,.level-summary-table td:first-child{min-width:68px;width:68px}.level-summary-table th:not(:first-child):not(:last-child),.level-summary-table td:not(:first-child):not(:last-child){min-width:30px}.level-summary-table th:last-child,.level-summary-table td:last-child{min-width:45px;width:45px}.level-summary-zoom-hint{font-size:9px}}
+
+.category-summary-list{display:flex;flex-direction:column;gap:10px}
+.category-summary-card{border:1px solid #c8c8c8;border-radius:10px;background:#fff;overflow:hidden;break-inside:avoid;page-break-inside:avoid}
+.category-summary-title{font-weight:900;font-size:16px;padding:10px 12px;background:#e7e6e6;border-bottom:1px solid #c8c8c8;text-transform:uppercase}
+.category-level-table-wrap{width:100%;overflow:hidden}
+.category-level-table{border-collapse:collapse;width:100%;table-layout:fixed;font-size:11px}
+.category-level-table th,.category-level-table td{border:1px solid #c8c8c8;padding:6px 4px;text-align:center;white-space:normal;overflow-wrap:anywhere;word-break:break-word}
+.category-level-table th{background:#eef3f8;color:#173b63;font-weight:900}
+.category-level-table th:first-child,.category-level-table td:first-child{width:28%;text-align:left}
+.category-level-table th:not(:first-child),.category-level-table td:not(:first-child){width:14.4%}
+.category-level-table .category-status-label{font-weight:900}
+.category-level-table .category-status-number,.category-level-table .category-status-zero{font-weight:800;font-size:12px}
+.category-level-table .category-total-row td{font-weight:900;background:#e8eef5!important;color:#173b63}
+.category-summary-empty{padding:12px;color:#64748b}
+@media(max-width:700px){.category-summary-title{font-size:15px}.category-level-table{font-size:9.5px}.category-level-table th,.category-level-table td{padding:5px 2px;line-height:1.15}.category-level-table th:first-child,.category-level-table td:first-child{width:28%}.category-level-table th:not(:first-child),.category-level-table td:not(:first-child){width:14.4%}.category-level-table .category-status-number,.category-level-table .category-status-zero{font-size:10.5px}}
+</style>
+<!-- PWA_START -->
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#17395f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<!-- PWA_END -->
+</head>
+<body>
+
+<header class="topbar">
+  <div class="logo">Control de Obra</div>
+  <div id="topBuilding" class="topBuilding"></div>
+</header>
+
+<main class="container">
+
+<section id="home">
+  <div class="home-head">
+    <div>
+      <h2 style="margin:0">Edificios</h2>
+      <div class="small">Crea un edificio para comenzar.</div>
+    </div>
+    <button class="btn green" onclick="openBuildingModal()">+ Agregar edificio</button>
+  </div>
+  <div class="matrix-toolbar" style="margin-bottom:12px">
+    <button class="btn red" onclick="showHomeTab('buildings')">Edificios</button>
+    <button class="btn gray" onclick="exportProgress()" title="Guardar todos los avances en un archivo para llevarlos a otra computadora">💾 Exportar avances</button>
+    <button class="btn gray" onclick="document.getElementById('importProgressInput').click()" title="Cargar avances previamente exportados">📥 Importar avances</button>
+    <input id="importProgressInput" type="file" accept="application/json,.json" style="display:none" onchange="importProgressFile(this)">
+  </div>
+  <div id="buildingsTab">
+    <div id="buildings" class="buildings"></div>
+  </div>
+  <div id="consolidatedTab" class="hidden">
+    <div class="card">
+      <h2 style="margin-top:0">Consolidado de edificios</h2>
+      <div class="small" style="margin-bottom:12px">Información reunida de todos los edificios creados.</div>
+      <div class="table-wrap" style="overflow:auto">
+        <table class="excel" style="min-width:720px">
+          <thead><tr>
+            <th>Edificio</th><th>Categoría</th><th>Concepto</th>
+            <th>Terminado</th><th>En proceso</th><th>Pendiente</th><th>Otros</th>
+          </tr></thead>
+          <tbody id="consolidatedBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="project" class="hidden">
+  <div class="matrix-toolbar">
+    <button class="btn gray" onclick="goHome()"><span style="color:#e00000;font-size:1.25em;font-weight:900;vertical-align:-1px">←</span> <span style="color:#8b0000;font-weight:800">Edificios</span></button>
+    <b id="projectName" class="project-name"></b>
+    <button class="btn" onclick="openCategoryModal()">+ Categoría</button>
+    <button class="btn gray" onclick="openConceptModal()">+ Concepto</button>
+    <button class="btn gray" onclick="pasteCategory()">📋 Pegar categoría</button>
+    <button class="btn gray" onclick="openStatusManager()">⚙ Estatus por categoría</button><button class="btn gray" onclick="openProjectSummary()" title="Analizar avances por departamento">📊 Resumen</button><button class="btn" onclick="openProjectPreview()" title="Ver proyecto como hoja">▣ Vista previa</button><button id="undoBtn" class="btn gray" onclick="undoLastChange()" title="Deshacer el último cambio">↶ Deshacer</button><button id="redoBtn" class="btn gray" onclick="redoLastChange()" title="No hay cambios para rehacer" disabled>↷ Adelantar</button>
+  </div>
+
+  <div class="matrix-shell">
+    <div class="matrix-head-scroll" id="matrixHeadScroll">
+      <table class="matrix-head-table">
+        <colgroup>
+          <col class="col-concept">
+          <col class="col-dept"><col class="col-dept"><col class="col-dept"><col class="col-dept"><col class="col-sep">
+          <col class="col-dept"><col class="col-dept"><col class="col-dept"><col class="col-dept"><col class="col-sep">
+          <col class="col-dept"><col class="col-dept"><col class="col-dept"><col class="col-dept"><col class="col-sep">
+          <col class="col-dept"><col class="col-dept"><col class="col-dept"><col class="col-dept">
+        </colgroup>
+        <thead>
+          <tr>
+            <th class="conceptcol" rowspan="2"><div style="display:flex;align-items:center;justify-content:space-between;gap:4px"><span>CONCEPTO</span><button type="button" class="category-filter-btn" onclick="openCategoryFilter(this);event.stopPropagation();return false;" title="Mostrar u ocultar categorías">☷</button></div></th>
+            <th class="level" colspan="4">100</th><th class="level-sep" rowspan="2"></th>
+            <th class="level" colspan="4">200</th><th class="level-sep" rowspan="2"></th>
+            <th class="level" colspan="4">300</th><th class="level-sep" rowspan="2"></th>
+            <th class="level" colspan="4">400</th>
+          </tr>
+          <tr>
+            <th class="dept">1</th><th class="dept">2</th><th class="dept">3</th><th class="dept">4</th>
+            <th class="dept">1</th><th class="dept">2</th><th class="dept">3</th><th class="dept">4</th>
+            <th class="dept">1</th><th class="dept">2</th><th class="dept">3</th><th class="dept">4</th>
+            <th class="dept">1</th><th class="dept">2</th><th class="dept">3</th><th class="dept">4</th>
+          </tr>
+        </thead>
+      </table>
+    </div>
+    <div class="matrix-scroll" id="matrixBodyScroll">
+      <table class="matrix">
+        <colgroup>
+          <col class="col-concept">
+          <col class="col-dept"><col class="col-dept"><col class="col-dept"><col class="col-dept"><col class="col-sep">
+          <col class="col-dept"><col class="col-dept"><col class="col-dept"><col class="col-dept"><col class="col-sep">
+          <col class="col-dept"><col class="col-dept"><col class="col-dept"><col class="col-dept"><col class="col-sep">
+          <col class="col-dept"><col class="col-dept"><col class="col-dept"><col class="col-dept">
+        </colgroup>
+        <thead>
+          <tr>
+            <th class="conceptcol" rowspan="2"><div style="display:flex;align-items:center;justify-content:space-between;gap:4px"><span>CONCEPTO</span><button type="button" class="category-filter-btn" onclick="openCategoryFilter(this);event.stopPropagation();return false;" title="Mostrar u ocultar categorías">☷</button></div></th>
+            <th class="level" colspan="4">100</th>
+            <th class="level-sep" rowspan="2"></th>
+            <th class="level" colspan="4">200</th>
+            <th class="level-sep" rowspan="2"></th>
+            <th class="level" colspan="4">300</th>
+            <th class="level-sep" rowspan="2"></th>
+            <th class="level" colspan="4">400</th>
+          </tr>
+          <tr>
+            <th class="dept">1</th><th class="dept">2</th><th class="dept">3</th><th class="dept">4</th>
+            <th class="dept">1</th><th class="dept">2</th><th class="dept">3</th><th class="dept">4</th>
+            <th class="dept">1</th><th class="dept">2</th><th class="dept">3</th><th class="dept">4</th>
+            <th class="dept">1</th><th class="dept">2</th><th class="dept">3</th><th class="dept">4</th>
+          </tr>
+        </thead>
+        <tbody id="matrixBody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<div id="statusMenu" class="status-menu hidden"></div>
+
+<div id="modalBg" class="modal-bg hidden">
+  <div class="modal">
+    <h3 id="modalTitle"></h3>
+    <div id="modalContent"></div>
+    <div class="modal-actions">
+      <button class="btn gray" onclick="closeModal()">Cancelar</button>
+      <button class="btn" id="modalSave">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORE='controlObraMatrixV1';
+const CATEGORY_CLIPBOARD='controlObraCategoryClipboardV1';
+const DEFAULT_STATUSES=[
+  {id:'st_done',name:'Terminado',color:'#c6efce'},
+  {id:'st_process',name:'En proceso',color:'#fce4d6'},
+  {id:'st_pending',name:'Pendiente',color:'#fff2cc'},
+  {id:'st_review',name:'Revisar',color:'#cfe2f3'},
+  {id:'st_na',name:'No aplica',color:'#e7e6e6'},
+  {id:'st_qty',name:'Cantidad',color:'#f4cccc',textColor:'#c00000',mode:'quantity'}
+];
+let state=JSON.parse(localStorage.getItem(STORE)||'{"buildings":[]}');
+if(!Array.isArray(state.statuses)||!state.statuses.length) state.statuses=DEFAULT_STATUSES.map(x=>({...x}));
+// Cada categoría conserva su propia lista de estatus y colores.
+state.buildings.forEach(b=>(b.categories||[]).forEach(c=>{
+  if(!Array.isArray(c.statuses)||!c.statuses.length) c.statuses=state.statuses.map(x=>({...x,id:uid()}));
+  c.statuses.forEach(st=>{ if(!st.textColor) st.textColor='#111111'; if(!st.mode) st.mode='normal'; });
+  if(!c.statuses.some(st=>st.mode==='quantity')) c.statuses.push({id:uid(),name:'Cantidad',color:'#f4cccc',textColor:'#c00000',mode:'quantity'});
+  if(!c.color) c.color='#8eb9d9';
+  if(!c.fontSize) c.fontSize=11;
+  if(!c.fontColor) c.fontColor='#111111';
+  (c.concepts||[]).forEach(x=>{ if(!x.color) x.color='#b9d8f0'; if(!x.fontColor) x.fontColor='#111111'; });
+}));
+let currentId=null;
+let activeCell=null;
+let modalMode='';
+
+const depts=['101','102','103','104','201','202','203','204','301','302','303','304','401','402','403','404'];
+const UNDO_STORE='controlObraUndoV1';
+let undoHistory=[];
+let redoHistory=[];
+let lastSavedSnapshot=JSON.stringify(state);
+let historyNavigation=false;
+
+// Historial de cambios: guarda hasta 50 estados anteriores para poder deshacer.
+(function loadUndoHistory(){
+  try{
+    const raw=localStorage.getItem(UNDO_STORE);
+    const data=raw?JSON.parse(raw):null;
+    if(data && data.current===lastSavedSnapshot && Array.isArray(data.history)) undoHistory=data.history.slice(-50);
+    if(data && data.current===lastSavedSnapshot && Array.isArray(data.redo)) redoHistory=data.redo.slice(-50);
+  }catch(e){ undoHistory=[]; }
+})();
+
+function persistUndoHistory(){
+  try{ localStorage.setItem(UNDO_STORE,JSON.stringify({current:lastSavedSnapshot,history:undoHistory,redo:redoHistory})); }catch(e){}
+  updateUndoButton();
+}
+function updateUndoButton(){
+  const btn=document.getElementById('undoBtn');
+  const redo=document.getElementById('redoBtn');
+  if(btn){ btn.disabled=undoHistory.length===0; btn.title=undoHistory.length?'Deshacer el último cambio':'No hay cambios para deshacer'; }
+  if(redo){ redo.disabled=redoHistory.length===0; redo.title=redoHistory.length?'Adelantar el último cambio':'No hay cambios para adelantar'; }
+}
+function save(){
+  const snapshot=JSON.stringify(state);
+  if(snapshot!==lastSavedSnapshot){
+    undoHistory.push(lastSavedSnapshot);
+    if(undoHistory.length>50) undoHistory.shift();
+    if(!historyNavigation) redoHistory=[];
+    lastSavedSnapshot=snapshot;
+    localStorage.setItem(STORE,snapshot);
+    persistUndoHistory();
+  }else{
+    localStorage.setItem(STORE,snapshot);
+    persistUndoHistory();
+  }
+}
+function applyHistorySnapshot(snapshot){
+  state=JSON.parse(snapshot);
+  lastSavedSnapshot=JSON.stringify(state);
+  localStorage.setItem(STORE,lastSavedSnapshot);
+  persistUndoHistory();
+  if(currentId && state.buildings.some(b=>b.id===currentId)){
+    renderMatrix();
+  }else{
+    currentId=null;
+    goHome();
+  }
+  if(typeof renderConsolidated==='function') renderConsolidated();
+  updateUndoButton();
+}
+function undoLastChange(){
+  if(!undoHistory.length)return;
+  const previous=undoHistory.pop();
+  try{
+    historyNavigation=true;
+    redoHistory.push(lastSavedSnapshot);
+    if(redoHistory.length>50) redoHistory.shift();
+    applyHistorySnapshot(previous);
+    historyNavigation=false;
+    persistUndoHistory();
+  }catch(e){ historyNavigation=false; console.error(e); }
+}
+function redoLastChange(){
+  if(!redoHistory.length)return;
+  const next=redoHistory.pop();
+  try{
+    historyNavigation=true;
+    undoHistory.push(lastSavedSnapshot);
+    if(undoHistory.length>50) undoHistory.shift();
+    applyHistorySnapshot(next);
+    historyNavigation=false;
+    persistUndoHistory();
+  }catch(e){ historyNavigation=false; console.error(e); }
+}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+
+function normalizeImportedState(raw){
+  const incoming=(raw && raw.state) ? raw.state : raw;
+  if(!incoming || typeof incoming!=='object' || !Array.isArray(incoming.buildings)) throw new Error('El archivo no contiene datos válidos de Control de Obra.');
+  if(!Array.isArray(incoming.statuses)||!incoming.statuses.length) incoming.statuses=DEFAULT_STATUSES.map(x=>({...x}));
+  incoming.buildings.forEach(b=>{
+    if(!b.color) b.color='#eef1f5';
+    if(!Array.isArray(b.categories)) b.categories=[];
+    b.categories.forEach(c=>{
+      if(!Array.isArray(c.statuses)||!c.statuses.length) c.statuses=incoming.statuses.map(x=>({...x,id:uid()}));
+      c.statuses.forEach(st=>{ if(!st.id) st.id=uid(); if(!st.textColor) st.textColor=st.mode==='quantity'?'#c00000':'#111111'; if(!st.mode) st.mode='normal'; });
+      if(!c.statuses.some(st=>st.mode==='quantity')) c.statuses.push({id:uid(),name:'Cantidad',color:'#f4cccc',textColor:'#c00000',mode:'quantity'});
+      if(!c.color) c.color='#8eb9d9';
+      if(c.visible===undefined) c.visible=true;
+      if(!c.fontSize) c.fontSize=11;
+      if(!c.fontColor) c.fontColor='#111111';
+      if(!Array.isArray(c.concepts)) c.concepts=[];
+      c.concepts.forEach(x=>{
+        if(!x.id) x.id=uid();
+        if(!x.color) x.color='#b9d8f0';
+        if(!x.fontColor) x.fontColor='#111111';
+        if(!x.values || typeof x.values!=='object') x.values={};
+      });
+    });
+  });
+  return incoming;
+}
+
+function exportProgress(){
+  try{
+    const payload={
+      app:'Control de Obra',
+      format:'controlObraMatrixV1',
+      version:1,
+      exportedAt:new Date().toISOString(),
+      state:state
+    };
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    const stamp=new Date().toISOString().slice(0,10);
+    a.href=url;
+    a.download='Control_Obra_Avances_'+stamp+'.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    alert('Avances exportados correctamente.\n\nEse archivo JSON contiene edificios, categorías, conceptos, colores y estatus. Puedes llevarlo a la computadora e importarlo allí.');
+  }catch(e){
+    console.error(e);
+    alert('No se pudieron exportar los avances.');
+  }
+}
+
+function importProgressFile(input){
+  const file=input.files && input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(){
+    try{
+      const parsed=JSON.parse(reader.result);
+      const imported=normalizeImportedState(parsed);
+      const count=imported.buildings.length;
+      if(!confirm('Se cargarán '+count+' edificio(s) del archivo y se reemplazarán los datos actuales de esta aplicación.\n\n¿Continuar?')){ input.value=''; return; }
+      state=imported;
+      localStorage.setItem(STORE,JSON.stringify(state));
+      undoHistory=[];
+      lastSavedSnapshot=JSON.stringify(state);
+      try{localStorage.setItem(UNDO_STORE,JSON.stringify({current:lastSavedSnapshot,history:[]}));}catch(e){}
+      currentId=null;
+      activeCell=null;
+      closeStatusMenu();
+      closeProjectSummary();
+      const preview=document.getElementById('projectPreview'); if(preview) preview.remove();
+      document.body.style.overflow='';
+      document.documentElement.style.overflow='';
+      goHome();
+      renderConsolidated();
+      updateUndoButton();
+      alert('Avances importados correctamente.');
+    }catch(e){
+      console.error(e);
+      alert('El archivo no es válido o no pertenece a Control de Obra.');
+    }finally{
+      input.value='';
+    }
+  };
+  reader.onerror=function(){ input.value=''; alert('No se pudo leer el archivo.'); };
+  reader.readAsText(file);
+}
+
+const BASE_COLOR_GROUPS = [
+  {name:'Claros', colors:['#ffffff','#f8fafc','#f1f5f9','#e0f2fe','#dbeafe','#dbeafe','#dcfce7','#d1fae5','#fef9c3','#fef3c7','#ffedd5','#fee2e2','#fce7f3','#f3e8ff','#ede9fe','#e0e7ff']},
+  {name:'Oscuros', colors:['#111827','#1f2937','#334155','#1e3a5f','#1e40af','#065f46','#166534','#854d0e','#9a3412','#991b1b','#9f1239','#6b21a8','#581c87','#3730a3','#312e81','#374151']},
+  {name:'Brillantes', colors:['#ff0000','#ff6b00','#ffd000','#00e676','#00c853','#00e5ff','#00b8ff','#0066ff','#304ffe','#7c00ff','#d500f9','#ff00c8','#ff1493','#ff4081','#76ff03','#c6ff00']}
+];
+function buildingColorPaletteHTML(inputId,current){
+  const colors=['#fff2cc','#ffe699','#fce4d6','#f8cbad','#f4cccc','#d9ead3','#b6d7a8','#d0e0e3','#b7dee8','#cfe2f3','#9fc5e8','#d9d2e9','#ead1dc','#fce5cd','#e2f0d9','#eaf4e4','#e8f1f8','#e3f2fd','#ede7f6','#f3e5f5','#fce4ec','#f5f5f5','#d9ead3','#c9daf8'];
+  return `<div class="building-color-picker"><div class="building-color-title">Colores claros y pastel</div><div class="building-color-grid">${colors.map(col=>`<button type="button" class="building-color-swatch" title="${col}" style="background:${col}" onclick="setBaseColor('${inputId}','${col}');event.stopPropagation();return false;"></button>`).join('')}</div><div style="display:flex;align-items:center;gap:8px;margin-top:9px;font-size:12px;font-weight:700;color:#475569"><span>Color elegido</span><span id="preview-${inputId}" class="building-color-dot" style="background:${esc(current||'#eef1f5')}"></span><input id="${inputId}" class="base-color-native" type="color" value="${esc(current||'#eef1f5')}" style="width:42px;height:30px;padding:0;border:0;background:transparent"></div></div>`;
+}
+
+function baseColorPaletteHTML(inputId,current){
+  const groups=BASE_COLOR_GROUPS.map(g=>`<div class="base-color-group"><div class="base-color-title">${g.name}</div><div class="base-color-grid">${g.colors.map(col=>`<button type="button" class="base-color-swatch" title="${col}" style="background:${col}" onclick="setBaseColor('${inputId}','${col}');event.stopPropagation();return false;"></button>`).join('')}</div></div>`).join('');
+  return `<div class="base-color-picker">
+    <div class="base-color-current"><span>Color seleccionado</span><span id="preview-${inputId}" class="base-color-preview" style="background:${esc(current||'#ffffff')}"></span></div>
+    <input id="${inputId}" class="base-color-native" type="color" value="${esc(current||'#ffffff')}">
+    ${groups}
+    <button type="button" class="base-color-custom" onclick="document.getElementById('${inputId}').click();event.stopPropagation();return false;">🎨 Personalizado</button>
+  </div>`;
+}
+function setBaseColor(inputId,color){
+  const input=document.getElementById(inputId);
+  if(!input)return;
+  input.value=color;
+  const preview=document.getElementById('preview-'+inputId);
+  if(preview)preview.style.background=color;
+}
+
+function openBuildingModal(){
+ modalMode='building';
+ document.getElementById('modalTitle').textContent='Agregar edificio';
+ document.getElementById('modalContent').innerHTML='<input id="modalInput" style="width:100%;margin-bottom:4px" placeholder="Ejemplo: A4">'+buildingColorPaletteHTML('buildingColor','#eef1f5');
+ document.getElementById('modalSave').onclick=saveModal;
+ document.getElementById('modalBg').classList.remove('hidden');
+ setTimeout(()=>document.getElementById('modalInput').focus(),50);
+}
+function openCategoryModal(){
+ modalMode='category';
+ document.getElementById('modalTitle').textContent='Agregar categoría';
+ document.getElementById('modalContent').innerHTML=`<input id="modalInput" style="width:100%;margin-bottom:12px" placeholder="Ejemplo: ACABADOS">
+   <div class="category-options">
+     <label><span>Color de fondo</span>${baseColorPaletteHTML('categoryColor','#8eb9d9')}</label>
+     <label><span>Color de letra</span>${baseColorPaletteHTML('categoryFontColor','#111111')}</label>
+     <label><span>Tamaño de letra</span><select id="categoryFontSize"><option value="10">Pequeña (10 px)</option><option value="11" selected>Normal (11 px)</option><option value="12">Mediana (12 px)</option><option value="14">Grande (14 px)</option><option value="16">Muy grande (16 px)</option><option value="18">Extra grande (18 px)</option></select></label>
+   </div>`;
+ document.getElementById('modalSave').onclick=saveModal;
+ document.getElementById('modalBg').classList.remove('hidden');
+ setTimeout(()=>document.getElementById('modalInput').focus(),50);
+}
+function openConceptModal(){
+ const b=state.buildings.find(x=>x.id===currentId);
+ if(!b.categories.length){alert('Primero agrega una categoría.');return}
+ modalMode='concept';
+ document.getElementById('modalTitle').textContent='Agregar concepto';
+ document.getElementById('modalContent').innerHTML=`
+   <select id="conceptCategory" style="width:100%;margin-bottom:9px">
+   ${b.categories.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}
+   </select>
+   <input id="modalInput" style="width:100%;margin-bottom:9px" placeholder="Ejemplo: Yeso en plafones">
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+     <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700;color:#4b5563"><span>Color de fondo</span>${baseColorPaletteHTML('conceptColor','#b9d8f0')}</label>
+     <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700;color:#4b5563"><span>Color de letra</span>${baseColorPaletteHTML('conceptFontColor','#111111')}</label>
+   </div>`;
+ document.getElementById('modalSave').onclick=saveModal;
+ document.getElementById('modalBg').classList.remove('hidden');
+ setTimeout(()=>document.getElementById('modalInput').focus(),50);
+}
+function closeModal(){
+  document.getElementById('modalBg').classList.add('hidden');
+  document.getElementById('modalSave').style.display='';
+  document.querySelector('#modalBg .modal-actions .btn.gray').textContent='Cancelar';
+}
+function saveModal(){
+ const val=document.getElementById('modalInput').value.trim();
+ if(!val)return;
+ if(modalMode==='building'){
+   const color=document.getElementById('buildingColor')?.value||'#eef1f5';
+   state.buildings.push({id:uid(),name:val,color,categories:[]});
+   save();closeModal();renderBuildings();renderConsolidated();return;
+ }
+ if(modalMode==='editBuilding'){
+   const b=state.buildings.find(x=>x.id===window.editingBuildingId);
+   if(!b)return;
+   b.name=val;
+   b.color=document.getElementById('buildingColor')?.value||b.color||'#eef1f5';
+   save();closeModal();renderBuildings();
+   if(currentId===b.id){ applyBuildingBackground(b); document.getElementById('projectName').textContent=b.name; document.getElementById('topBuilding').textContent=b.name; }
+   return;
+ }
+ const b=state.buildings.find(x=>x.id===currentId);
+ if(!b)return;
+ if(modalMode==='editCategory'){
+   const id=window.editingCategoryId;
+   const c=b.categories.find(x=>x.id===id);
+   if(!c)return;
+   c.name=val;
+   c.color=document.getElementById('categoryColor')?.value||c.color||'#8eb9d9';
+   c.fontColor=document.getElementById('categoryFontColor')?.value||c.fontColor||'#111111';
+   c.fontSize=parseInt(document.getElementById('categoryFontSize')?.value||c.fontSize||11,10);
+   save();closeModal();renderMatrix();return;
+ }
+ if(modalMode==='editConcept'){
+   const cid=window.editingConceptCategoryId,xid=window.editingConceptId;
+   const c=b.categories.find(x=>x.id===cid),x=c&&c.concepts.find(x=>x.id===xid);
+   if(!x)return;
+   x.name=val;
+   x.color=document.getElementById('conceptColor')?.value||x.color||'#b9d8f0';
+   x.fontColor=document.getElementById('conceptFontColor')?.value||x.fontColor||'#111111';
+   save();closeModal();renderMatrix();return;
+ }
+ if(modalMode==='category'){
+   const categoryColor=document.getElementById('categoryColor')?.value||'#8eb9d9';
+   const categoryFontSize=parseInt(document.getElementById('categoryFontSize')?.value||'11',10);
+   const categoryFontColor=document.getElementById('categoryFontColor')?.value||'#111111';
+   b.categories.push({id:uid(),name:val,color:categoryColor,fontColor:categoryFontColor,fontSize:categoryFontSize,visible:true,concepts:[],statuses:state.statuses.map(x=>({...x,id:uid()}))});
+ }else if(modalMode==='concept'){
+   const cid=document.getElementById('conceptCategory').value;
+   const c=b.categories.find(x=>x.id===cid);
+   const color=document.getElementById('conceptColor')?.value||'#b9d8f0';
+   const fontColor=document.getElementById('conceptFontColor')?.value||'#111111';
+   c.concepts.push({id:uid(),name:val,color,fontColor,values:{}});
+ }
+ save();closeModal();renderMatrix();
+}
+
+
+function getCategoryStatuses(category){
+  if(!category) return [];
+  if(!Array.isArray(category.statuses)||!category.statuses.length){
+    category.statuses=state.statuses.map(x=>({...x,id:uid()}));
+  }
+  category.statuses.forEach(st=>{ if(!st.textColor) st.textColor='#111111'; if(!st.mode) st.mode='normal'; });
+  if(!category.statuses.some(st=>st.mode==='quantity')) category.statuses.push({id:uid(),name:'Cantidad',color:'#f4cccc',textColor:'#c00000',mode:'quantity'});
+  return category.statuses;
+}
+function closeStatusMenu(){
+  const menu=document.getElementById('statusMenu');
+  menu.classList.add('hidden');
+  activeCell=null;
+}
+
+function editConcept(categoryId, conceptId){
+  const b = state.buildings.find(x=>x.id===currentId);
+  if(!b) return;
+  const cat = b.categories.find(x=>x.id===categoryId);
+  const concept = cat && cat.concepts.find(x=>x.id===conceptId);
+  if(!concept) return;
+  const name = prompt('Corregir concepto:', concept.name);
+  if(name===null) return;
+  const clean = name.trim();
+  if(!clean) return;
+  concept.name = clean;
+  save();
+  renderMatrix();
+}
+
+function openStatusMenu(cell){
+  const menu=document.getElementById('statusMenu');
+  activeCell=cell;
+  const b=state.buildings.find(x=>x.id===currentId);
+  const cat=b && b.categories.find(x=>x.id===cell.dataset.cid);
+  const statuses=getCategoryStatuses(cat);
+  let html=`<div style="font-weight:700;padding:5px 8px 7px;border-bottom:1px solid #e5e7eb;margin-bottom:3px">${esc(cat?.name||'Estatus')}</div>`;
+  html+=`<button class="status-option status-empty" onclick="requestStatusConfirmation('')">✕ Sin estatus</button>`;
+  html+=`<button class="status-option" onclick="closeStatusMenu()" style="justify-content:center;color:#b42318;border-top:1px solid #e5e7eb;margin-top:3px;padding-top:10px">↩ Cancelar</button>`;
+  statuses.forEach(st=>{
+    const tag=st.mode==='quantity'?' · cantidad':'';
+    html+=`<button class="status-option" onclick="requestStatusConfirmation('${st.id}')">
+      <span class="status-dot" style="background:${esc(st.color)};border-color:${esc(st.textColor||'#999')}"></span><span style="color:${esc(st.textColor||'#111')}">${esc(st.name)}${esc(tag)}</span>
+    </button>`;
+  });
+  const currentValue=cat && cell.dataset.xid ? cat.concepts.find(x=>x.id===cell.dataset.xid)?.values?.[cell.dataset.dept] : null;
+  const hasCopiedStatus=!!loadStatusClipboard();
+  const canCopy=!!currentValue;
+  html+=`<div style="border-top:1px solid #e5e7eb;margin-top:5px;padding-top:5px">
+    <button class="status-option" ${canCopy?'':'disabled'} onclick="copyCellStatus();event.stopPropagation();return false;">📋 Copiar estatus</button>
+    <button class="status-option" ${hasCopiedStatus?'':'disabled'} onclick="pasteCellStatus();event.stopPropagation();return false;">📥 Pegar estatus${hasCopiedStatus?'':' (vacío)'}</button>
+  </div>`;
+  menu.innerHTML=html;
+  menu.classList.remove('hidden');
+
+  // El menú de estatus puede contener muchos elementos.
+  // Se calcula su tamaño real y se coloca donde haya más espacio,
+  // dejando siempre una zona desplazable para llegar a los últimos estatus.
+  const r=cell.getBoundingClientRect();
+  const margin=8;
+  const gap=5;
+  const w=Math.min(320,Math.max(190,window.innerWidth-16));
+  menu.style.width='auto';
+  menu.style.maxHeight='calc(100vh - 16px)';
+  let left=Math.min(r.left,window.innerWidth-w-margin);
+  left=Math.max(margin,left);
+  menu.style.left=left+'px';
+
+  const availableBelow=Math.max(40,window.innerHeight-r.bottom-margin-gap);
+  const availableAbove=Math.max(40,r.top-margin-gap);
+  const naturalHeight=menu.scrollHeight;
+  const maxHeight=Math.max(120,Math.min(window.innerHeight-16,Math.max(availableBelow,availableAbove)));
+  menu.style.maxHeight=maxHeight+'px';
+
+  // Preferimos abrir debajo. Si no cabe, abrimos arriba.
+  const finalHeight=Math.min(naturalHeight,maxHeight);
+  let top=r.bottom+gap;
+  if(finalHeight>availableBelow && availableAbove>availableBelow){
+    top=Math.max(margin,r.top-gap-finalHeight);
+  }else{
+    top=Math.min(top,window.innerHeight-margin-finalHeight);
+    top=Math.max(margin,top);
+  }
+  menu.style.top=top+'px';
+}
+
+const STATUS_CLIPBOARD='controlObraStatusClipboardV1';
+function loadStatusClipboard(){
+  try{
+    const raw=localStorage.getItem(STATUS_CLIPBOARD);
+    return raw?JSON.parse(raw):null;
+  }catch(e){ return null; }
+}
+function copyCellStatus(){
+  if(!activeCell)return;
+  const b=state.buildings.find(x=>x.id===currentId);
+  const c=b && b.categories.find(x=>x.id===activeCell.dataset.cid);
+  const x=c && c.concepts.find(x=>x.id===activeCell.dataset.xid);
+  const value=x && x.values ? x.values[activeCell.dataset.dept] : null;
+  if(!value){ alert('Esta celda no tiene un estatus para copiar.'); return; }
+  const st=statusForValue(value,c);
+  if(!st){ alert('No se pudo identificar el estatus de esta celda.'); return; }
+  const clip={statusName:st.name,mode:st.mode||'normal',quantity:st.mode==='quantity' ? (value.quantity??'') : null};
+  try{ localStorage.setItem(STATUS_CLIPBOARD,JSON.stringify(clip)); }catch(e){}
+  closeStatusMenu();
+  alert(`Estatus copiado: ${st.name}${st.mode==='quantity' ? ' · '+String(value.quantity??'') : ''}`);
+}
+function pasteCellStatus(){
+  if(!activeCell)return;
+  const clip=loadStatusClipboard();
+  if(!clip){ alert('No hay un estatus copiado.'); return; }
+  const b=state.buildings.find(x=>x.id===currentId);
+  const c=b && b.categories.find(x=>x.id===activeCell.dataset.cid);
+  if(!c)return;
+  const statuses=getCategoryStatuses(c);
+  let st=statuses.find(s=>String(s.name||'').trim().toLowerCase()===String(clip.statusName||'').trim().toLowerCase());
+  if(!st && clip.mode==='quantity') st=statuses.find(s=>s.mode==='quantity');
+  if(!st){
+    alert(`La categoría destino no tiene el estatus “${clip.statusName}”.`);
+    return;
+  }
+  const cid=activeCell.dataset.cid,xid=activeCell.dataset.xid,dept=activeCell.dataset.dept;
+  const x=c.concepts.find(x=>x.id===xid);
+  if(!x)return;
+  x.values=x.values||{};
+  if(st.mode==='quantity'){
+    const q=String(clip.quantity??'').trim();
+    if(q===''){ alert('El estatus copiado no tiene una cantidad válida.'); return; }
+    x.values[dept]={statusId:st.id,quantity:q};
+  }else{
+    x.values[dept]={statusId:st.id};
+  }
+  save();
+  const cell=document.querySelector(`.data-cell[data-cid="${CSS.escape(cid)}"][data-xid="${CSS.escape(xid)}"][data-dept="${CSS.escape(dept)}"]`);
+  if(cell){
+    const value=x.values[dept];
+    const current=statusForValue(value,c);
+    cell.style.background=current ? current.color : '';
+    cell.style.color=current ? (current.textColor||'#111111') : '';
+    cell.textContent=current ? (current.mode==='quantity' ? String(value.quantity??'') : current.name) : '';
+    cell.title=current ? (current.mode==='quantity' ? 'Cantidad: '+String(value.quantity??'') : current.name) : 'Seleccionar estatus';
+    if(current && (current.mode==='quantity' || String(current.name||'').length>5)) syncMatrixColumnWidths();
+  }
+  closeStatusMenu();
+}
+
+function requestStatusConfirmation(statusId){
+  if(!activeCell)return;
+  const b=state.buildings.find(x=>x.id===currentId);
+  const c=b && b.categories.find(x=>x.id===activeCell.dataset.cid);
+  const st=statusId ? getCategoryStatuses(c).find(s=>s.id===statusId) : null;
+  const name=st ? st.name : 'Sin estatus';
+  const confirmBox=document.getElementById('statusConfirm') || document.createElement('div');
+  confirmBox.id='statusConfirm';
+  confirmBox.className='status-confirm';
+  confirmBox.innerHTML=`<div class="status-confirm-text">¿Quieres aplicar el estatus<br><strong>“${esc(name)}”</strong>?</div>
+    <div class="status-confirm-actions">
+      <button type="button" class="cancel" onclick="cancelStatusConfirmation()">Cancelar</button>
+      <button type="button" class="ok" onclick="confirmStatusApplication()">OK</button>
+    </div>`;
+  if(!confirmBox.parentNode) document.body.appendChild(confirmBox);
+  confirmBox.dataset.statusId=statusId;
+  const menu=document.getElementById('statusMenu');
+  const mr=menu.getBoundingClientRect();
+  // El candado queda DEBAJO del menú de estatus para no tapar las opciones
+  // ni los botones de la matriz. Si no cabe abajo, se coloca arriba como último recurso.
+  const w=220;
+  const gap=7;
+  let left=Math.min(mr.left,window.innerWidth-w-8);
+  left=Math.max(8,left);
+  let top=mr.bottom+gap;
+  if(top+100>window.innerHeight-8){
+    top=Math.max(8,mr.top-100-gap);
+  }
+  confirmBox.style.left=left+'px';
+  confirmBox.style.top=top+'px';
+  confirmBox.classList.remove('hidden');
+}
+
+function cancelStatusConfirmation(){
+  const box=document.getElementById('statusConfirm');
+  if(box) box.classList.add('hidden');
+}
+
+function confirmStatusApplication(){
+  if(!activeCell)return;
+  const box=document.getElementById('statusConfirm');
+  const statusId=box ? (box.dataset.statusId||'') : '';
+  if(box) box.classList.add('hidden');
+  applyCellStatus(statusId);
+}
+
+function setCellStatus(statusId){
+  // Mantiene compatibilidad con cualquier llamada antigua: ahora siempre pide confirmación.
+  requestStatusConfirmation(statusId);
+}
+
+function applyCellStatus(statusId){
+  if(!activeCell)return;
+  const cid=activeCell.dataset.cid,xid=activeCell.dataset.xid,dept=activeCell.dataset.dept;
+  const b=state.buildings.find(x=>x.id===currentId);
+  if(!b)return;
+  const c=b.categories.find(x=>x.id===cid);
+  if(!c)return;
+  const x=c.concepts.find(x=>x.id===xid);
+  if(!x)return;
+  x.values=x.values||{};
+  if(statusId){
+    const st=getCategoryStatuses(c).find(s=>s.id===statusId);
+    if(st && st.mode==='quantity'){
+      const previous=x.values[dept]?.quantity ?? '';
+      const entered=prompt('Escribe la cantidad (puede ser negativa):', previous);
+      if(entered===null)return;
+      const clean=String(entered).trim().replace(',', '.');
+      if(clean===''){ delete x.values[dept]; }
+      else if(!isFinite(Number(clean))){ alert('Escribe una cantidad numérica.'); return; }
+      else x.values[dept]={statusId,quantity:clean};
+    }else x.values[dept]={statusId};
+  }else delete x.values[dept];
+  save();
+
+  // Actualiza únicamente la celda modificada para evitar reconstruir toda la matriz.
+  // Esto hace que el cambio de estatus sea mucho más rápido en móviles.
+  const cell=document.querySelector(`.data-cell[data-cid="${CSS.escape(cid)}"][data-xid="${CSS.escape(xid)}"][data-dept="${CSS.escape(dept)}"]`);
+  if(cell){
+    const value=x.values[dept];
+    const current=statusForValue(value,c);
+    cell.style.background=current ? current.color : '';
+    cell.style.color=current ? (current.textColor||'#111111') : '';
+    cell.textContent=current ? (current.mode==='quantity' ? String(value.quantity??'') : current.name) : '';
+    cell.title=current ? (current.mode==='quantity' ? 'Cantidad: '+String(value.quantity??'') : current.name) : 'Seleccionar estatus';
+    // Solo recalcula anchos si el contenido puede cambiar el ancho de la columna.
+    if(current && (current.mode==='quantity' || String(current.name||'').length>5)) syncMatrixColumnWidths();
+  }
+  closeStatusMenu();
+}
+function statusForValue(v,category){
+  if(!v)return null;
+  const statuses=getCategoryStatuses(category);
+  if(typeof v==='string'){
+    return statuses.find(st=>st.name.toLowerCase()===v.toLowerCase()) || null;
+  }
+  return statuses.find(st=>st.id===v.statusId) || null;
+}
+function openStatusManager(){
+  const b=state.buildings.find(x=>x.id===currentId);
+  if(!b || !b.categories.length){alert('Primero agrega una categoría.');return}
+  modalMode='statusManager';
+  document.getElementById('modalTitle').textContent='Estatus por categoría';
+  renderStatusManager(b.categories[0].id);
+  document.getElementById('modalSave').style.display='none';
+  document.querySelector('#modalBg .modal-actions .btn.gray').textContent='Cerrar';
+  document.getElementById('modalBg').classList.remove('hidden');
+}
+function renderStatusManager(categoryId){
+  const b=state.buildings.find(x=>x.id===currentId);
+  const c=b.categories.find(x=>x.id===categoryId) || b.categories[0];
+  const statuses=getCategoryStatuses(c);
+  document.getElementById('modalContent').innerHTML=`
+    <div class="muted">Cada categoría tiene su propia lista de estatus y cada estatus puede tener su propio color.</div>
+    <div style="margin-top:12px">
+      <label style="font-size:12px;font-weight:700">Categoría</label>
+      <select id="statusCategory" style="width:100%;margin-top:4px" onchange="renderStatusManager(this.value)">
+        ${b.categories.map(cat=>`<option value="${cat.id}" ${cat.id===c.id?'selected':''}>${esc(cat.name)}</option>`).join('')}
+      </select>
+    </div>
+    <div class="formline" style="margin-top:12px">
+      <input id="newStatusName" placeholder="Ejemplo: Listo para entrega">
+      <input id="newStatusColor" class="color-input" type="color" value="#c6efce" title="Color de fondo">
+      <input id="newStatusTextColor" class="color-input" type="color" value="#111111" title="Color de letra">
+      <label style="display:flex;align-items:center;gap:4px;font-size:11px;white-space:nowrap"><input id="newStatusQuantity" type="checkbox"> Cantidad</label>
+      <button class="btn" onclick="addCategoryStatus('${c.id}')">+ Agregar</button>
+    </div>
+    <div class="status-manager-list">
+      ${statuses.map(st=>`
+        <div class="status-manager-row" style="grid-template-columns:28px 1fr 28px 28px auto;">
+          <input class="color-input" type="color" value="${esc(st.color)}" title="Color de fondo" onchange="changeCategoryStatusColor('${c.id}','${st.id}',this.value)">
+          <input type="text" value="${esc(st.name)}" onchange="renameCategoryStatus('${c.id}','${st.id}',this.value)">
+          <input class="color-input" type="color" value="${esc(st.textColor||'#111111')}" title="Color de letra" onchange="changeCategoryStatusTextColor('${c.id}','${st.id}',this.value)">
+          <label title="Al elegir este estatus pedirá una cantidad" style="display:flex;justify-content:center"><input type="checkbox" ${st.mode==='quantity'?'checked':''} onchange="changeCategoryStatusMode('${c.id}','${st.id}',this.checked)"></label>
+          <button class="btn red" style="padding:6px 8px" onclick="deleteCategoryStatus('${c.id}','${st.id}')">Eliminar</button>
+        </div>`).join('')}
+    </div>`;
+}
+function addCategoryStatus(categoryId){
+  const b=state.buildings.find(x=>x.id===currentId),c=b.categories.find(x=>x.id===categoryId);
+  const name=document.getElementById('newStatusName').value.trim();
+  const color=document.getElementById('newStatusColor').value;
+  const textColor=document.getElementById('newStatusTextColor')?.value||'#111111';
+  const mode=document.getElementById('newStatusQuantity')?.checked?'quantity':'normal';
+  if(!name)return;
+  if(getCategoryStatuses(c).some(x=>x.name.toLowerCase()===name.toLowerCase())){alert('Ese estatus ya existe en esta categoría.');return}
+  c.statuses.push({id:uid(),name,color,textColor,mode});
+  save();renderStatusManager(categoryId);renderMatrix();
+}
+function renameCategoryStatus(categoryId,id,name){
+  const b=state.buildings.find(x=>x.id===currentId),c=b.categories.find(x=>x.id===categoryId);
+  name=name.trim(); const st=getCategoryStatuses(c).find(x=>x.id===id);
+  if(!st||!name)return;
+  st.name=name;save();renderStatusManager(categoryId);renderMatrix();
+}
+function changeCategoryStatusColor(categoryId,id,color){
+  const b=state.buildings.find(x=>x.id===currentId),c=b.categories.find(x=>x.id===categoryId);
+  const st=getCategoryStatuses(c).find(x=>x.id===id);
+  if(!st)return;
+  st.color=color;save();renderStatusManager(categoryId);renderMatrix();
+}
+function changeCategoryStatusTextColor(categoryId,id,color){
+  const b=state.buildings.find(x=>x.id===currentId),c=b.categories.find(x=>x.id===categoryId);
+  const st=getCategoryStatuses(c).find(x=>x.id===id); if(!st)return;
+  st.textColor=color;save();renderStatusManager(categoryId);renderMatrix();
+}
+function changeCategoryStatusMode(categoryId,id,enabled){
+  const b=state.buildings.find(x=>x.id===currentId),c=b.categories.find(x=>x.id===categoryId);
+  const st=getCategoryStatuses(c).find(x=>x.id===id); if(!st)return;
+  st.mode=enabled?'quantity':'normal';save();renderStatusManager(categoryId);renderMatrix();
+}
+function deleteCategoryStatus(categoryId,id){
+  const b=state.buildings.find(x=>x.id===currentId),c=b.categories.find(x=>x.id===categoryId);
+  const st=getCategoryStatuses(c).find(x=>x.id===id);
+  if(!st)return;
+  if(!confirm('¿Eliminar el estatus "'+st.name+'" de esta categoría?'))return;
+  c.statuses=c.statuses.filter(x=>x.id!==id);
+  (c.concepts||[]).forEach(x=>{
+    Object.keys(x.values||{}).forEach(d=>{if(x.values[d]?.statusId===id) delete x.values[d]});
+  });
+  save();renderStatusManager(categoryId);renderMatrix();
+}
+
+
+function showHomeTab(tab){
+  document.getElementById('buildingsTab').classList.toggle('hidden',tab!=='buildings');
+  document.getElementById('consolidatedTab').classList.toggle('hidden',tab!=='consolidated');
+  if(tab==='consolidated') renderConsolidated();
+}
+function renderConsolidated(){
+  const body=document.getElementById('consolidatedBody');
+  let rows='';
+  state.buildings.forEach(b=>{
+    b.categories.forEach(c=>{
+      c.concepts.forEach(x=>{
+        let done=0,process=0,pending=0,other=0;
+        depts.forEach(d=>{
+          const raw=x.values&&x.values[d];
+          const st=statusForValue(raw,c);
+          if(!st){return}
+          const n=st.name.toLowerCase();
+          if(n==='terminado') done++;
+          else if(n==='en proceso') process++;
+          else if(n==='pendiente') pending++;
+          else other++;
+        });
+        rows+=`<tr>
+          <td>${esc(b.name)}</td>
+          <td>${esc(c.name)}</td>
+          <td>${esc(x.name)}</td>
+          <td style="text-align:center">${done}</td>
+          <td style="text-align:center">${process}</td>
+          <td style="text-align:center">${pending}</td>
+          <td style="text-align:center">${other}</td>
+        </tr>`;
+      });
+    });
+  });
+  body.innerHTML=rows||'<tr><td colspan="7" style="text-align:center;padding:25px;color:#6b7280">Todavía no hay conceptos para consolidar.</td></tr>';
+}
+
+function openBuildingColorModal(id){
+ const b=state.buildings.find(x=>x.id===id); if(!b)return;
+ window.editingBuildingId=id; modalMode='editBuilding';
+ document.getElementById('modalTitle').textContent='Color del edificio';
+ document.getElementById('modalContent').innerHTML='<input id="modalInput" style="width:100%;margin-bottom:4px" value="'+esc(b.name)+'" placeholder="Nombre del edificio">'+buildingColorPaletteHTML('buildingColor',b.color||'#eef1f5');
+ document.getElementById('modalSave').onclick=saveModal; document.getElementById('modalBg').classList.remove('hidden');
+ setTimeout(()=>document.getElementById('modalInput').focus(),50);
+}
+function applyBuildingBackground(b){ const color=(b&&b.color)||'#eef1f5'; document.body.style.background=color; const main=document.querySelector('main.container'); if(main) main.style.background=color; }
+function clearBuildingBackground(){ document.body.style.background='#eef1f5'; const main=document.querySelector('main.container'); if(main) main.style.background=''; }
+
+function renderBuildings(){
+ const el=document.getElementById('buildings');
+ if(!state.buildings.length){
+   el.innerHTML='<div class="empty">No hay edificios todavía.<br><br><button class="btn green" onclick="openBuildingModal()">+ Crear edificio</button></div>';
+   return;
+ }
+ el.innerHTML=state.buildings.map(b=>`
+ <div class="card">
+   <div class="building-name">${esc(b.name)} <span class="building-color-chip"><span class="building-color-dot" style="background:${esc(b.color||'#eef1f5')}"></span>Color</span></div>
+   <div class="small">${b.categories.length} categoría(s)</div>
+   <div class="actions">
+     <button class="btn" onclick="openBuilding('${b.id}')">Abrir</button>
+     <button class="btn gray" onclick="openBuildingColorModal('${b.id}')">🎨 Color</button>
+     <button class="btn red" onclick="deleteBuilding('${b.id}')">Eliminar</button>
+   </div>
+ </div>`).join('');
+}
+function deleteBuilding(id){
+ const b=state.buildings.find(x=>x.id===id);
+ if(!confirm('¿Eliminar el edificio '+b.name+'?'))return;
+ state.buildings=state.buildings.filter(x=>x.id!==id);save();renderBuildings();renderConsolidated();
+}
+function openBuilding(id){
+ currentId=id;
+ const b=state.buildings.find(x=>x.id===id);
+ document.getElementById('home').classList.add('hidden');
+ document.getElementById('project').classList.remove('hidden');
+ applyBuildingBackground(b);
+ document.getElementById('projectName').textContent=b.name;
+ document.getElementById('topBuilding').textContent=b.name;
+ renderMatrix();
+}
+function goHome(){
+ currentId=null;
+ clearBuildingBackground();
+ document.getElementById('project').classList.add('hidden');
+ document.getElementById('home').classList.remove('hidden');
+ document.getElementById('topBuilding').textContent='';
+ showHomeTab('buildings');
+ renderBuildings();
+}
+
+function copyCategory(categoryId){
+  const b=state.buildings.find(x=>x.id===currentId);
+  const c=b?.categories.find(x=>x.id===categoryId);
+  if(!c)return;
+  const payload={
+    name:c.name,
+    color:c.color||'#8eb9d9',
+    fontSize:c.fontSize||11,
+    fontColor:c.fontColor||'#111111',
+    statuses:getCategoryStatuses(c).map(st=>({name:st.name,color:st.color,textColor:st.textColor||'#111111',mode:st.mode||'normal'})),
+    concepts:(c.concepts||[]).map(x=>({name:x.name,color:x.color||'#b9d8f0',fontColor:x.fontColor||'#111111'}))
+  };
+  localStorage.setItem(CATEGORY_CLIPBOARD,JSON.stringify(payload));
+  alert('Categoría copiada. Ahora abre el otro edificio y pulsa “📋 Pegar categoría”.');
+}
+
+function pasteCategory(){
+  const b=state.buildings.find(x=>x.id===currentId);
+  if(!b)return;
+  const raw=localStorage.getItem(CATEGORY_CLIPBOARD);
+  if(!raw){alert('No hay ninguna categoría copiada. Primero usa “📋 Copiar”.');return;}
+  let data;
+  try{data=JSON.parse(raw);}catch(e){alert('La información copiada no es válida.');return;}
+  if(!data||!data.name){alert('La información copiada no es válida.');return;}
+
+  let name=data.name;
+  if(b.categories.some(c=>c.name.toLowerCase()===name.toLowerCase())){
+    let n=2;
+    while(b.categories.some(c=>c.name.toLowerCase()===(name+' (copia '+n+')').toLowerCase()))n++;
+    name=name+' (copia '+n+')';
+  }
+
+  const copiedStatuses=Array.isArray(data.statuses)&&data.statuses.length?data.statuses:DEFAULT_STATUSES;
+  const category={
+    id:uid(),
+    name,
+    color:data.color||'#8eb9d9',
+    fontSize:data.fontSize||11,
+    fontColor:data.fontColor||'#111111',
+    visible:true,
+    concepts:[],
+    statuses:copiedStatuses.map(st=>({id:uid(),name:st.name,color:st.color||'#e7e6e6',textColor:st.textColor||'#111111',mode:st.mode||'normal'}))
+  };
+  (Array.isArray(data.concepts)?data.concepts:[]).forEach(x=>{
+    category.concepts.push({id:uid(),name:x.name,color:x.color||'#b9d8f0',fontColor:x.fontColor||'#111111',values:{}});
+  });
+
+  b.categories.push(category);
+  save();
+  renderMatrix();
+  alert('Categoría pegada correctamente con '+category.concepts.length+' concepto(s). Los avances/estatus de las celdas no se copiaron.');
+}
+
+function deleteCategory(id){
+ const b=state.buildings.find(x=>x.id===currentId);
+ const c=b.categories.find(x=>x.id===id);
+ if(!confirm('¿Eliminar la categoría "'+c.name+'" y todos sus conceptos?'))return;
+ b.categories=b.categories.filter(x=>x.id!==id);save();renderMatrix();
+}
+function deleteConcept(cid,xid){
+ const b=state.buildings.find(x=>x.id===currentId);
+ if(!b)return;
+ const c=b.categories.find(x=>x.id===cid);
+ if(!c)return;
+ const x=c.concepts.find(x=>x.id===xid);
+ if(!x)return;
+ if(!confirm('¿Eliminar el concepto "'+x.name+'"?'))return;
+ c.concepts=c.concepts.filter(x=>x.id!==xid);
+ save();
+ renderMatrix();
+}
+function renameCategory(id){
+ const b=state.buildings.find(x=>x.id===currentId),c=b&&b.categories.find(x=>x.id===id);
+ if(!c)return;
+ const n=prompt('Nombre de la categoría:',c.name);
+ if(n&&n.trim()){c.name=n.trim();save();renderMatrix()}
+}
+function renameConcept(cid,xid){
+ const b=state.buildings.find(x=>x.id===currentId),c=b&&b.categories.find(x=>x.id===cid),x=c&&c.concepts.find(x=>x.id===xid);
+ if(!x)return;
+ const n=prompt('Nombre del concepto:',x.name);
+ if(n&&n.trim()){x.name=n.trim();save();renderMatrix()}
+}
+
+function openEditCategoryModal(id){
+ window.editingCategoryId=id;
+ const b=state.buildings.find(x=>x.id===currentId),c=b&&b.categories.find(x=>x.id===id);
+ if(!c)return;
+ modalMode='editCategory';
+ document.getElementById('modalTitle').textContent='Modificar categoría';
+ document.getElementById('modalContent').innerHTML=`
+   <input id="modalInput" style="width:100%;margin-bottom:12px" value="${esc(c.name)}" placeholder="Nombre de la categoría">
+   <div class="category-options">
+     <label><span>Color de fondo</span>${baseColorPaletteHTML('categoryColor',c.color||'#8eb9d9')}</label>
+     <label><span>Color de letra</span>${baseColorPaletteHTML('categoryFontColor',c.fontColor||'#111111')}</label>
+     <label><span>Tamaño de letra</span><select id="categoryFontSize">
+       <option value="10" ${String(c.fontSize||11)==='10'?'selected':''}>Pequeña (10 px)</option>
+       <option value="11" ${String(c.fontSize||11)==='11'?'selected':''}>Normal (11 px)</option>
+       <option value="12" ${String(c.fontSize||11)==='12'?'selected':''}>Mediana (12 px)</option>
+       <option value="14" ${String(c.fontSize||11)==='14'?'selected':''}>Grande (14 px)</option>
+       <option value="16" ${String(c.fontSize||11)==='16'?'selected':''}>Muy grande (16 px)</option>
+       <option value="18" ${String(c.fontSize||11)==='18'?'selected':''}>Extra grande (18 px)</option>
+     </select></label>
+   </div>`;
+ document.getElementById('modalSave').onclick=saveModal;
+ document.getElementById('modalBg').classList.remove('hidden');
+ setTimeout(()=>document.getElementById('modalInput').focus(),50);
+}
+
+function openEditConceptModal(cid,xid){
+ window.editingConceptCategoryId=cid; window.editingConceptId=xid;
+ const b=state.buildings.find(x=>x.id===currentId),c=b&&b.categories.find(x=>x.id===cid),x=c&&c.concepts.find(x=>x.id===xid);
+ if(!x)return;
+ modalMode='editConcept';
+ document.getElementById('modalTitle').textContent='Modificar concepto';
+ document.getElementById('modalContent').innerHTML=`
+   <input id="modalInput" style="width:100%;margin-bottom:12px" value="${esc(x.name)}" placeholder="Nombre del concepto">
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+     <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700;color:#4b5563"><span>Color de fondo</span>${baseColorPaletteHTML('conceptColor',x.color||'#b9d8f0')}</label>
+     <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700;color:#4b5563"><span>Color de letra</span>${baseColorPaletteHTML('conceptFontColor',x.fontColor||'#111111')}</label>
+   </div>`;
+ document.getElementById('modalSave').onclick=saveModal;
+ document.getElementById('modalBg').classList.remove('hidden');
+ setTimeout(()=>document.getElementById('modalInput').focus(),50);
+}
+
+function syncMatrixHeader(){
+  const head=document.getElementById('matrixHeadScroll');
+  const body=document.getElementById('matrixBodyScroll');
+  if(!head||!body||head.dataset.syncReady)return;
+  head.dataset.syncReady='1';
+  let syncing=false;
+  body.addEventListener('scroll',()=>{if(syncing)return;syncing=true;head.scrollLeft=body.scrollLeft;requestAnimationFrame(()=>syncing=false);},{passive:true});
+  head.addEventListener('scroll',()=>{if(syncing)return;syncing=true;body.scrollLeft=head.scrollLeft;requestAnimationFrame(()=>syncing=false);},{passive:true});
+}
+
+function moveCategoryUp(id){
+  const b=state.buildings.find(x=>x.id===currentId); if(!b)return;
+  const i=b.categories.findIndex(x=>x.id===id);
+  if(i<=0)return;
+  const tmp=b.categories[i-1];
+  b.categories[i-1]=b.categories[i];
+  b.categories[i]=tmp;
+  save(); renderMatrix();
+}
+function moveCategoryDown(id){
+  const b=state.buildings.find(x=>x.id===currentId); if(!b)return;
+  const i=b.categories.findIndex(x=>x.id===id);
+  if(i<0 || i>=b.categories.length-1)return;
+  const tmp=b.categories[i+1];
+  b.categories[i+1]=b.categories[i];
+  b.categories[i]=tmp;
+  save(); renderMatrix();
+}
+
+function syncMatrixColumnWidths(){
+ const b=state.buildings.find(x=>x.id===currentId);
+ if(!b)return;
+ // Ancho base compacto. Solo crece cuando un estatus usado en esa columna
+ // realmente necesita más espacio. Esto evita ensanchar todas las columnas.
+ const widths=depts.map(()=>34);
+ const getWidth=maxChars=>{
+   if(maxChars<=7) return 34;
+   return Math.max(34,Math.min(72,Math.ceil(maxChars*5.5+8)));
+ };
+ depts.forEach((d,i)=>{
+   let maxChars=0;
+   (b.categories||[]).filter(c=>c.visible!==false).forEach(c=>{
+     (c.concepts||[]).forEach(x=>{
+       const raw=x.values&&x.values[d];
+       const st=statusForValue(raw,c);
+       if(st){
+         const display=st.mode==='quantity' ? String(raw?.quantity??'') : String(st.name||'');
+         maxChars=Math.max(maxChars,display.trim().length);
+       }
+     });
+   });
+   widths[i]=getWidth(maxChars);
+ });
+ const headCols=document.querySelectorAll('#matrixHeadScroll colgroup .col-dept');
+ const bodyCols=document.querySelectorAll('#matrixBodyScroll colgroup .col-dept');
+ [headCols,bodyCols].forEach(cols=>cols.forEach((col,i)=>{
+   const w=widths[i]+'px';
+   col.style.width=w; col.style.minWidth=w; col.style.maxWidth=w;
+ }));
+ document.querySelectorAll('#matrixHeadScroll .dept').forEach((el,i)=>{
+   const w=widths[i]+'px'; el.style.width=w; el.style.minWidth=w; el.style.maxWidth=w;
+ });
+ document.querySelectorAll('#matrixBodyScroll td.data-cell').forEach(el=>{
+   const i=depts.indexOf(el.dataset.dept);
+   if(i>=0){const w=widths[i]+'px';el.style.width=w;el.style.minWidth=w;el.style.maxWidth=w;}
+ });
+}
+function renderMatrix(){
+ const b=state.buildings.find(x=>x.id===currentId);
+ const body=document.getElementById('matrixBody');
+ let out='';
+ if(!b.categories.length){
+   out='<tr><td colspan="20" style="padding:35px;text-align:center;color:#6b7280">Agrega una categoría para comenzar.</td></tr>';
+   body.innerHTML=out;return;
+ }
+ b.categories.forEach(c=>{
+   // Las categorías ocultas no se dibujan; así se reduce el DOM y el espacio usado.
+   if(c.visible===false) return;
+   out+=`<tr class="category-row" data-category-id="${c.id}">
+     <td class="conceptcell category-title category-banner" style="background:${c.color||'#8eb9d9'}!important;color:${c.fontColor||'#111111'}!important;font-size:${c.fontSize||11}px"><div style="display:flex;align-items:center;justify-content:space-between;gap:4px"><span style="display:flex;align-items:center;min-width:0;overflow:hidden;text-overflow:ellipsis"><span style="overflow:hidden;text-overflow:ellipsis">${esc(c.name)}</span></span><span style="display:flex;gap:2px;flex:none"><button type="button" class="category-dots" title="Opciones de categoría" onclick="openCategoryActions(this,'${c.id}');event.stopPropagation();return false;">⋮</button></span></div></td>
+     ${depts.map((d,i)=>'<td class="data-cell" style="background:#707070"></td>'+([3,7,11].includes(i)?'<td class="sep-cell"></td>':'')).join('')}
+   </tr>`;
+   c.concepts.forEach((x,i)=>{
+     out+=`<tr>
+       <td class="conceptcell" style="background:${esc(x.color||'#b9d8f0')}!important;color:${esc(x.fontColor||'#111111')}!important"><span class="number">${i+1}</span><span class="concept-name">${esc(x.name)}</span><span class="concept-tools"><button type="button" class="category-dots" title="Opciones del concepto" onclick="openConceptActions(this,'${c.id}','${x.id}');event.stopPropagation();return false;">⋮</button></span></td>`;
+     depts.forEach((d,di)=>{
+       const raw=(x.values&&x.values[d])||'';
+       const st=statusForValue(raw,c);
+       const bg=st?`background:${esc(st.color)}`:'';
+       const txt=st?`color:${esc(st.textColor||'#111111')}`:'';
+       const label=st?(st.mode==='quantity' ? esc(raw.quantity ?? '') : esc(st.name)):'';
+       out+=`<td class="data-cell" style="${bg};${txt}"
+         data-cid="${c.id}" data-xid="${x.id}" data-dept="${d}"
+         title="${st?(st.mode==='quantity' ? 'Cantidad: '+String(raw.quantity??'') : st.name):'Seleccionar estatus'}"
+         onclick="openStatusMenu(this)">${label}</td>`;
+       if([3,7,11].includes(di)) out+='<td class="sep-cell"></td>';
+     });
+     out+='</tr>';
+   });
+   out+=`<tr class="add-concept-row">
+      <td style="display:flex;align-items:center;gap:4px"><input id="inline-${c.id}" placeholder="+ Agregar concepto" onkeydown="if(event.key==='Enter')addInlineConcept('${c.id}')"><input id="inline-color-${c.id}" class="color-input" type="color" value="#b9d8f0" title="Color del concepto"><button onclick="addInlineConcept('${c.id}')">+</button></td>
+      ${depts.map((d,i)=>'<td></td>'+([3,7,11].includes(i)?'<td class="sep-cell"></td>':'')).join('')}
+   </tr>`;
+ });
+ body.innerHTML=out;
+ syncMatrixColumnWidths();
+ syncMatrixHeader();
+}
+
+function openConceptActions(anchor,cid,xid){
+  closeCategoryMenus();
+  document.getElementById('conceptActionMenu')?.remove();
+  const menu=document.createElement('div');
+  menu.id='conceptActionMenu';
+  menu.className='category-action-menu';
+  menu.innerHTML=`<button type="button" onclick="openEditConceptModal('${cid}','${xid}');closeCategoryMenus();event.stopPropagation();return false;">✎ <span>Modificar texto y color</span></button>
+    <button type="button" class="danger" onclick="deleteConcept('${cid}','${xid}');closeCategoryMenus();event.stopPropagation();return false;">🗑 <span>Eliminar concepto</span></button>`;
+  document.body.appendChild(menu);
+  const r=anchor.getBoundingClientRect();
+  const w=menu.offsetWidth||190;
+  let left=Math.min(r.left,window.innerWidth-w-8); left=Math.max(8,left);
+  let top=r.bottom+4;
+  const h=menu.offsetHeight||90;
+  if(top+h>window.innerHeight) top=Math.max(8,r.top-h-4);
+  menu.style.left=left+'px'; menu.style.top=top+'px';
+}
+
+function closeCategoryMenus(){
+  document.getElementById('categoryFilterMenu')?.remove();
+  document.getElementById('categoryActionMenu')?.remove();
+  document.getElementById('conceptActionMenu')?.remove();
+}
+function openCategoryFilter(anchor){
+  closeCategoryMenus();
+  const b=state.buildings.find(x=>x.id===currentId);
+  if(!b)return;
+  const menu=document.createElement('div');
+  menu.id='categoryFilterMenu';
+  menu.className='category-filter-menu';
+  const visibleCount=b.categories.filter(c=>c.visible!==false).length;
+  menu.innerHTML=`<div class="filter-head">Filtrar categorías <span style="font-weight:600;color:#6b7280">(${visibleCount}/${b.categories.length} visibles)</span></div>
+    <div class="filter-actions"><button type="button" onclick="setAllCategoriesVisible(true)">✓ Mostrar todas</button><button type="button" onclick="setAllCategoriesVisible(false)">Ocultar todas</button></div>
+    ${b.categories.map(c=>`<label class="category-filter-item"><input type="checkbox" ${c.visible!==false?'checked':''} onchange="toggleCategoryVisible('${c.id}',this.checked)"><span>${esc(c.name)}</span></label>`).join('')}`;
+  document.body.appendChild(menu);
+  const r=anchor.getBoundingClientRect();
+  const w=Math.min(300,Math.max(230,menu.offsetWidth||230));
+  let left=Math.min(r.left,window.innerWidth-w-8); left=Math.max(8,left);
+  let top=r.bottom+5;
+  const mh=Math.min(menu.offsetHeight||300,window.innerHeight-16);
+  if(top+mh>window.innerHeight) top=Math.max(8,r.top-mh-5);
+  menu.style.left=left+'px'; menu.style.top=top+'px'; menu.style.maxHeight=Math.max(180,window.innerHeight-16)+'px';
+}
+function toggleCategoryVisible(id,visible){
+  const b=state.buildings.find(x=>x.id===currentId); const c=b?.categories.find(x=>x.id===id); if(!c)return;
+  c.visible=!!visible;
+  save();
+  renderMatrix();
+  // El menú se reconstruye para mantener los checks y el contador actualizados.
+  openCategoryFilter(document.querySelector('.category-filter-btn'));
+}
+function setAllCategoriesVisible(visible){
+  const b=state.buildings.find(x=>x.id===currentId); if(!b)return;
+  b.categories.forEach(c=>c.visible=!!visible);
+  save(); renderMatrix();
+  openCategoryFilter(document.querySelector('.category-filter-btn'));
+}
+function openCategoryActions(anchor,id){
+  closeCategoryMenus();
+  const menu=document.createElement('div');
+  menu.id='categoryActionMenu';
+  menu.className='category-action-menu';
+  menu.innerHTML=`<button type="button" onclick="openEditCategoryModal('${id}');closeCategoryMenus();event.stopPropagation();return false;">✎ <span>Modificar texto y color</span></button>
+    <button type="button" onclick="moveCategoryUp('${id}');closeCategoryMenus();event.stopPropagation();return false;">↑ <span>Subir categoría</span></button>
+    <button type="button" onclick="moveCategoryDown('${id}');closeCategoryMenus();event.stopPropagation();return false;">↓ <span>Bajar categoría</span></button>
+    <button type="button" onclick="copyCategory('${id}');closeCategoryMenus();event.stopPropagation();return false;">📋 <span>Copiar categoría</span></button>
+    <button type="button" class="danger" onclick="deleteCategory('${id}');closeCategoryMenus();event.stopPropagation();return false;">🗑 <span>Eliminar categoría</span></button>`;
+  document.body.appendChild(menu);
+  const r=anchor.getBoundingClientRect();
+  const w=menu.offsetWidth||175;
+  let left=Math.min(r.left,window.innerWidth-w-8); left=Math.max(8,left);
+  let top=r.bottom+4;
+  const h=menu.offsetHeight||150;
+  if(top+h>window.innerHeight) top=Math.max(8,r.top-h-4);
+  menu.style.left=left+'px'; menu.style.top=top+'px';
+}
+document.addEventListener('click',function(e){
+  if(e.target.closest('.category-filter-menu,.category-filter-btn,.category-action-menu,.category-dots')) return;
+  closeCategoryMenus();
+});
+window.addEventListener('resize',closeCategoryMenus);
+
+function addInlineConcept(cid){
+ const input=document.getElementById('inline-'+cid);
+ const name=input.value.trim();if(!name)return;
+ const b=state.buildings.find(x=>x.id===currentId),c=b.categories.find(x=>x.id===cid);
+ const color=document.getElementById('inline-color-'+cid)?.value||'#b9d8f0';
+ c.concepts.push({id:uid(),name,color,values:{}});
+ save();renderMatrix();
+}
+
+function cellClick(el){ openStatusMenu(el); }
+function cellBlur(el){}
+function cellKey(e,el){ if(e.key==='Escape') closeStatusMenu(); }
+function applyCellStyle(el,val){}
+
+try {
+  document.getElementById('home').classList.remove('hidden');
+  document.getElementById('project').classList.add('hidden');
+  renderBuildings();
+} catch (err) {
+  console.error(err);
+  document.getElementById('buildings').innerHTML =
+    '<div class="empty">No se pudo iniciar la aplicación. Recarga la página.</div>';
+}
+updateUndoButton();
+
+function closeProjectPreview(){
+  const p=document.getElementById('projectPreview');
+  if(p) p.remove();
+  document.body.style.overflow='';
+  document.documentElement.style.overflow='';
+}
+
+let expandedFullscreen=false;
+let expandedZoom=1;
+
+function closeExpandedPreview(){
+  const p=document.getElementById('expandedPreview');
+  if(p) p.remove();
+  window.removeEventListener('resize',fitExpandedPreview);
+  window.removeEventListener('orientationchange',fitExpandedPreview);
+  try{ if(screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); }catch(e){}
+  if(expandedFullscreen && document.fullscreenElement && document.exitFullscreen){
+    try{ document.exitFullscreen().catch(()=>{}); }catch(e){}
+  }
+  expandedFullscreen=false;
+  document.body.style.overflow='';
+  document.documentElement.style.overflow='';
+}
+
+function fitExpandedPreview(){
+  const wrap=document.getElementById('expandedTableWrap');
+  if(!wrap) return;
+  const table=wrap.querySelector('table');
+  if(!table) return;
+  table.style.transformOrigin='top left';
+  table.style.transform='scale('+expandedZoom+')';
+  const w=table.offsetWidth*expandedZoom;
+  const h=table.offsetHeight*expandedZoom;
+  wrap.style.width=w+'px';
+  wrap.style.height=h+'px';
+}
+
+function setExpandedZoom(delta){
+  expandedZoom=Math.max(.5,Math.min(2.5,Math.round((expandedZoom+delta)*10)/10));
+  fitExpandedPreview();
+  const label=document.getElementById('expandedZoomValue');
+  if(label) label.textContent=Math.round(expandedZoom*100)+'%';
+}
+
+function resetExpandedZoom(){
+  expandedZoom=1;
+  fitExpandedPreview();
+  const label=document.getElementById('expandedZoomValue');
+  if(label) label.textContent='100%';
+}
+
+async function openExpandedPreview(){
+  const source=document.querySelector('#previewMove .preview-table');
+  if(!source){ alert('Primero abre la Vista previa.'); return; }
+  closeExpandedPreview();
+  expandedZoom=1;
+  const h='<div id="expandedPreview" class="expanded-preview landscape-mode">'+
+    '<div class="expanded-bar">'+
+      '<button type="button" class="btn" onclick="closeExpandedPreview()">← Volver</button>'+      '<strong>Vista previa ampliada · gira el celular</strong>'+      '<div class="expanded-zoom">'+        '<button type="button" class="btn" onclick="setExpandedZoom(-0.1)" title="Alejar">−</button>'+        '<span id="expandedZoomValue" class="expanded-zoom-value">100%</span>'+        '<button type="button" class="btn" onclick="setExpandedZoom(0.1)" title="Acercar">+</button>'+        '<button type="button" class="btn" onclick="resetExpandedZoom()" title="Restablecer zoom">⟳</button>'+      '</div>'+    '</div>'+    '<div class="expanded-stage" id="expandedStage"><div class="expanded-table-wrap" id="expandedTableWrap">'+source.outerHTML+'</div></div>'+  '</div>';
+  document.body.insertAdjacentHTML('beforeend',h);
+  document.body.style.overflow='hidden';
+  document.documentElement.style.overflow='hidden';
+  const p=document.getElementById('expandedPreview');
+  if(p){p.style.display='flex';p.style.flexDirection='column';p.style.position='fixed';p.style.inset='0';p.style.zIndex='999999';}
+
+  // Pantalla completa + giro automático a horizontal en Android cuando el navegador lo permite.
+  try{
+    if(document.documentElement.requestFullscreen){
+      await document.documentElement.requestFullscreen();
+      expandedFullscreen=true;
+    }
+  }catch(e){}
+  try{
+    if(screen.orientation && screen.orientation.lock){
+      await screen.orientation.lock('landscape');
+    }
+  }catch(e){}
+
+  fitExpandedPreview();
+  setTimeout(fitExpandedPreview,80);
+  setTimeout(fitExpandedPreview,300);
+  window.addEventListener('resize',fitExpandedPreview);
+  window.addEventListener('orientationchange',fitExpandedPreview);
+}
+
+
+function openProjectSummary(){
+  const b=state.buildings.find(x=>x.id===currentId);
+  if(!b)return;
+  closeProjectSummary();
+
+  const fmt=n=>Number(n||0).toLocaleString('es-MX',{maximumFractionDigits:2});
+  const escHtml=x=>esc(String(x??''));
+
+  // El resumen agrupa por piso/edificio: cada nivel muestra sus cuatro departamentos.
+  // Nivel 1 (100) = 101, 102, 103, 104
+  // Nivel 2 (200) = 201, 202, 203, 204
+  // Nivel 3 (300) = 301, 302, 303, 304
+  // Nivel 4 (400) = 401, 402, 403, 404
+  // Cada departamento conserva su valor individual y después se calcula el subtotal.
+  // En estatus de tipo Cantidad se suma el valor real capturado, incluidos negativos.
+  const levelGroups=[
+    {name:'Nivel 1 (100)',depts:['101','102','103','104']},
+    {name:'Nivel 2 (200)',depts:['201','202','203','204']},
+    {name:'Nivel 3 (300)',depts:['301','302','303','304']},
+    {name:'Nivel 4 (400)',depts:['401','402','403','404']}
+  ];
+
+  const getStatus=(cat,v)=>{
+    if(!v)return null;
+    const sts=Array.isArray(cat.statuses)?cat.statuses:[];
+    if(typeof v==='string'){
+      return sts.find(x=>String(x.name||'').trim().toLowerCase()===v.trim().toLowerCase())||null;
+    }
+    return sts.find(x=>x.id===v.statusId)||null;
+  };
+  const statusKey=st=>String(st?.name||'').trim().toLowerCase();
+
+  // Resumen por categoría: una categoría debajo de otra.
+  // ESTATUS en filas y NIVELES 1-4 en columnas para que los cuatro niveles
+  // se vean simultáneamente en el celular.
+  const lightStatusColor=(hex,amount=0.58)=>{
+    hex=String(hex||'').trim();
+    if(!/^#[0-9a-fA-F]{6}$/.test(hex)) return '#f1f4f7';
+    const n=parseInt(hex.slice(1),16);
+    const r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+    const mix=v=>Math.round(v+(255-v)*amount);
+    return '#'+[mix(r),mix(g),mix(b)].map(v=>v.toString(16).padStart(2,'0')).join('');
+  };
+
+  let categoryTable='<div class="category-summary-list">';
+
+  (b.categories||[]).forEach(cat=>{
+    if(cat.visible===false)return;
+    const concepts=Array.isArray(cat.concepts)?cat.concepts:[];
+    const sts=Array.isArray(cat.statuses)?cat.statuses:[];
+
+    const usedKeys=new Set();
+    concepts.forEach(con=>levelGroups.forEach(level=>level.depts.forEach(dept=>{
+      const st=getStatus(cat,con.values&&con.values[dept]);
+      if(st)usedKeys.add(statusKey(st));
+    })));
+    const ownStatuses=sts.filter(st=>usedKeys.has(statusKey(st)));
+
+    categoryTable+='<div class="category-summary-card">';
+    categoryTable+='<div class="category-summary-title">'+escHtml(cat.name||'Sin categoría')+'</div>';
+
+    if(!ownStatuses.length){
+      categoryTable+='<div class="category-summary-empty">Sin estatus registrados</div></div>';
+      return;
+    }
+
+    categoryTable+='<div class="category-level-table-wrap">';
+    categoryTable+='<table class="category-level-table category-status-matrix"><thead><tr>';
+    categoryTable+='<th>ESTATUS</th>';
+    levelGroups.forEach(level=>{
+      categoryTable+='<th>'+escHtml(level.name)+'</th>';
+    });
+    categoryTable+='<th>TOTALES</th></tr></thead><tbody>';
+
+    const grand={};
+    ownStatuses.forEach(st=>grand[statusKey(st)]=0);
+
+    ownStatuses.forEach(st=>{
+      const sk=statusKey(st);
+      const strongBg=st.color||'#e7e6e6';
+      const strongFg=st.textColor||'#111111';
+      let allTotal=0;
+      categoryTable+='<tr>';
+      categoryTable+='<td class="category-status-label" style="background:'+strongBg+';color:'+strongFg+';font-weight:800">'+escHtml(st.name)+'</td>';
+
+      levelGroups.forEach(level=>{
+        let n=0;
+        level.depts.forEach(dept=>{
+          concepts.forEach(con=>{
+            const v=con.values&&con.values[dept];
+            const cellSt=getStatus(cat,v);
+            if(!cellSt || statusKey(cellSt)!==sk)return;
+            if(cellSt.mode==='quantity'){
+              const q=Number(v && typeof v==='object' ? v.quantity : NaN);
+              if(Number.isFinite(q))n+=q;
+            }else n+=1;
+          });
+        });
+        allTotal+=n;
+        grand[sk]+=n;
+        const zero=n===0;
+        const fg=zero?'#5b6168':strongFg;
+        categoryTable+='<td class="'+(zero?'category-status-zero':'category-status-number')+'" style="background:'+lightStatusColor(strongBg)+';color:'+fg+'">'+fmt(n)+'</td>';
+      });
+
+      const zero=allTotal===0;
+      categoryTable+='<td class="'+(zero?'category-status-zero':'category-status-number')+'" style="background:'+lightStatusColor(strongBg)+';color:'+(zero?'#5b6168':strongFg)+';font-weight:900">'+fmt(allTotal)+'</td>';
+      categoryTable+='</tr>';
+    });
+
+    // Totales de la categoría: cada nivel y el total general conservan
+    // el color relacionado con el estatus correspondiente.
+    categoryTable+='<tr class="category-total-row"><td>TOTALES</td>';
+    levelGroups.forEach(level=>{
+      let levelTotal=0;
+      ownStatuses.forEach(st=>{
+        const sk=statusKey(st);
+        level.depts.forEach(dept=>{
+          concepts.forEach(con=>{
+            const v=con.values&&con.values[dept];
+            const cellSt=getStatus(cat,v);
+            if(!cellSt || statusKey(cellSt)!==sk)return;
+            if(cellSt.mode==='quantity'){
+              const q=Number(v && typeof v==='object' ? v.quantity : NaN);
+              if(Number.isFinite(q))levelTotal+=q;
+            }else levelTotal+=1;
+          });
+        });
+      });
+      categoryTable+='<td>'+fmt(levelTotal)+'</td>';
+    });
+    const totalGeneral=Object.values(grand).reduce((a,v)=>a+Number(v||0),0);
+    categoryTable+='<td>'+fmt(totalGeneral)+'</td></tr>';
+    categoryTable+='</tbody></table></div></div>';
+  });
+
+  categoryTable+='</div>';
+
+  const h='<div id="projectSummary" class="summary-overlay">'
+    +'<div class="summary-bar">'
+    +'<button type="button" class="btn" onclick="closeProjectSummary()">← Regresar</button>'
+    +'<strong>📊 Resumen por categoría · '+escHtml(b.name)+'</strong>'
+    +'<button type="button" class="btn" onclick="window.print()">🖨 Imprimir</button>'
+    +'<button type="button" class="btn" onclick="openLevelSummary()">📋 Resumen por niveles</button>'
+    +'</div>'
+    +'<div class="summary-paper">'
+    +'<div class="summary-building-title">'+escHtml(b.name)+'</div>'
+    +'<div class="summary-note">Cada categoría muestra únicamente sus propios estatus por nivel. Nivel 1 (100) = 101/102/103/104, Nivel 2 (200) = 201/202/203/204, Nivel 3 (300) = 301/302/303/304 y Nivel 4 (400) = 401/402/403/404. Los estatus de tipo Cantidad suman las cantidades reales capturadas, incluyendo valores negativos.</div>'
+    +'<div class="summary-section"><h3>Resumen por categoría</h3>'+categoryTable+'</div>'
+    +'</div></div>';
+
+  document.body.insertAdjacentHTML('beforeend',h);
+  document.body.style.overflow='hidden';
+  document.documentElement.style.overflow='hidden';
+}
+
+function openLevelSummary(){
+  const b=state.buildings.find(x=>x.id===currentId);
+  if(!b)return;
+  const old=document.getElementById('levelSummary');
+  if(old)old.remove();
+
+  const fmt=n=>Number(n||0).toLocaleString('es-MX',{maximumFractionDigits:2});
+  const escHtml=x=>esc(String(x??''));
+  const levels=[
+    {name:'Nivel 1 (100)',depts:['101','102','103','104']},
+    {name:'Nivel 2 (200)',depts:['201','202','203','204']},
+    {name:'Nivel 3 (300)',depts:['301','302','303','304']},
+    {name:'Nivel 4 (400)',depts:['401','402','403','404']}
+  ];
+  const getStatus=(cat,v)=>{
+    if(!v)return null;
+    const sts=Array.isArray(cat.statuses)?cat.statuses:[];
+    if(typeof v==='string') return sts.find(x=>String(x.name||'').trim().toLowerCase()===v.trim().toLowerCase())||null;
+    return sts.find(x=>x.id===v.statusId)||null;
+  };
+  const statusKey=st=>String(st?.name||'').trim().toLowerCase();
+  const lightStatusColor=(hex,amount=0.55)=>{
+    hex=String(hex||'').trim();
+    if(!/^#[0-9a-fA-F]{6}$/.test(hex)) return '#f0f3f6';
+    const n=parseInt(hex.slice(1),16);
+    const r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+    const mix=v=>Math.round(v+(255-v)*amount);
+    return '#'+[mix(r),mix(g),mix(b)].map(v=>v.toString(16).padStart(2,'0')).join('');
+  };
+
+  let html='';
+  (b.categories||[]).forEach(cat=>{
+    if(cat.visible===false)return;
+    const concepts=Array.isArray(cat.concepts)?cat.concepts:[];
+    if(!concepts.length)return;
+    const statuses=Array.isArray(cat.statuses)?cat.statuses:[];
+
+    const used=new Set();
+    concepts.forEach(con=>levels.forEach(level=>level.depts.forEach(dept=>{
+      const st=getStatus(cat,con.values&&con.values[dept]);
+      if(st)used.add(statusKey(st));
+    })));
+    const ownStatuses=statuses.filter(st=>used.has(statusKey(st)));
+
+    let tbl='<div class="level-summary-card level-summary-wide-card">';
+    tbl+='<div class="level-summary-title">'+escHtml(cat.name||'Sin categoría')+'</div>';
+    tbl+='<div class="level-summary-zoom-hint">Pellizca con dos dedos para ampliar o reducir. Desliza la tabla para consultar todos los departamentos.</div>';
+    tbl+='<div class="level-summary-wrap level-summary-touch"><table class="level-summary-table level-status-matrix"><thead>';
+    tbl+='<tr><th rowspan="2">ESTATUS</th>';
+    levels.forEach(level=>{tbl+='<th class="level-group-head" colspan="4">'+escHtml(level.name)+'</th>';});
+    tbl+='<th rowspan="2">TOTALES</th></tr><tr>';
+    levels.forEach(()=>['1','2','3','4'].forEach(n=>{tbl+='<th class="dept-subhead">'+n+'</th>'; }));
+    tbl+='</tr></thead><tbody>';
+
+    const calcCell=(st,dept)=>{
+      let n=0;
+      concepts.forEach(con=>{
+        const v=con.values&&con.values[dept];
+        const cellSt=getStatus(cat,v);
+        if(!cellSt || statusKey(cellSt)!==statusKey(st))return;
+        if(cellSt.mode==='quantity'){
+          const q=Number(v && typeof v==='object' ? v.quantity : NaN);
+          if(Number.isFinite(q))n+=q;
+        }else n+=1;
+      });
+      return n;
+    };
+
+    if(ownStatuses.length){
+      ownStatuses.forEach(st=>{
+        const bg=lightStatusColor(st.color||'#e7e6e6');
+        const fg=st.textColor||'#111';
+        let grand=0;
+        tbl+='<tr><td class="level-status-name" style="background:'+(st.color||'#e7e6e6')+';color:'+fg+';font-weight:800">'+escHtml(st.name)+'</td>';
+        levels.forEach(level=>level.depts.forEach(dept=>{
+          const n=calcCell(st,dept); grand+=n;
+          tbl+='<td class="'+(n===0?'level-summary-zero':'level-summary-number')+'" style="background:'+bg+';color:'+(n===0?'#666':fg)+'">'+fmt(n)+'</td>';
+        }));
+        tbl+='<td class="level-summary-number level-status-total" style="background:'+bg+';color:'+fg+'">'+fmt(grand)+'</td></tr>';
+      });
+    }else{
+      tbl+='<tr><td class="level-status-name">Sin estatus</td>';
+      for(let i=0;i<16;i++)tbl+='<td class="level-summary-zero">0</td>';
+      tbl+='<td class="level-summary-zero">0</td></tr>';
+    }
+
+    // Totales por departamento de esta categoría.
+    tbl+='<tr class="level-summary-level-total"><td>TOTALES</td>';
+    let categoryGrand=0;
+    levels.forEach(level=>level.depts.forEach(dept=>{
+      let total=0;
+      concepts.forEach(con=>{
+        const v=con.values&&con.values[dept];
+        const st=getStatus(cat,v);
+        if(!st || !ownStatuses.some(x=>statusKey(x)===statusKey(st)))return;
+        if(st.mode==='quantity'){
+          const q=Number(v && typeof v==='object' ? v.quantity : NaN);
+          if(Number.isFinite(q))total+=q;
+        }else total+=1;
+      });
+      categoryGrand+=total;
+      tbl+='<td>'+fmt(total)+'</td>';
+    }));
+    tbl+='<td>'+fmt(categoryGrand)+'</td></tr>';
+    tbl+='</tbody></table></div></div>';
+    html+=tbl;
+  });
+
+  if(!html)html='<div class="level-summary-card"><div class="level-summary-title">Sin datos</div><div style="padding:14px">No hay categorías o conceptos registrados para mostrar.</div></div>';
+
+  const h='<div id="levelSummary" class="level-summary-overlay">'
+    +'<div class="level-summary-bar">'
+    +'<button type="button" class="btn" onclick="closeLevelSummary()">← Regresar</button>'
+    +'<strong>📊 Resumen por niveles · '+escHtml(b.name)+'</strong>'
+    +'<button type="button" class="btn" onclick="window.print()">🖨 Imprimir</button>'
+    +'</div>'
+    +'<div class="level-summary-paper">'
+    +'<div class="level-summary-building-title">'+escHtml(b.name)+'</div>'
+    +'<div class="summary-note">Cada categoría aparece una debajo de otra. Cada nivel está separado en sus departamentos 1, 2, 3 y 4: Nivel 1 = 101–104, Nivel 2 = 201–204, Nivel 3 = 301–304 y Nivel 4 = 401–404. Pellizca con dos dedos para ampliar o reducir la tabla. Los estatus de tipo Cantidad conservan sus cantidades reales, incluyendo valores negativos.</div>'
+    +html
+    +'</div></div>';
+
+  document.body.insertAdjacentHTML('beforeend',h);
+  document.body.style.overflow='hidden';
+  document.documentElement.style.overflow='hidden';
+}
+
+function closeLevelSummary(){
+  const p=document.getElementById('levelSummary');
+  if(p)p.remove();
+  document.body.style.overflow='';
+  document.documentElement.style.overflow='';
+}
+
+function closeProjectSummary(){
+  const p=document.getElementById('projectSummary');
+  if(p)p.remove();
+  document.body.style.overflow='';
+  document.documentElement.style.overflow='';
+}
+
+function openProjectPreview(){
+  const b=state.buildings.find(x=>x.id===currentId); if(!b)return;
+  let rows='';
+  rows+='<thead><tr><th class="preview-concept-head" rowspan="2">CONCEPTO</th>';
+  rows+='<th class="preview-level" colspan="4">100</th><th class="preview-sep"></th>';
+  rows+='<th class="preview-level" colspan="4">200</th><th class="preview-sep"></th>';
+  rows+='<th class="preview-level" colspan="4">300</th><th class="preview-sep"></th>';
+  rows+='<th class="preview-level" colspan="4">400</th></tr><tr>';
+  depts.forEach((d,i)=>{rows+='<th class="preview-dept">'+d.slice(-1)+'</th>';if([3,7,11].includes(i))rows+='<th class="preview-sep"></th>';});
+  rows+='</tr></thead><tbody>';
+  b.categories.forEach(cat=>{
+    if(cat.visible===false) return;
+    const catColor=cat.color||'#8eb9d9', catFont=cat.fontColor||'#111111';
+    rows+='<tr class="preview-cat"><td class="preview-concept-cell" style="background:'+catColor+';color:'+catFont+';font-size:'+(cat.fontSize||11)+'px">'+esc(cat.name)+'</td>';
+    depts.forEach((d,i)=>{rows+='<td style="background:'+catColor+'"></td>';if([3,7,11].includes(i))rows+='<td class="preview-sep"></td>';});
+    rows+='</tr>';
+    const sts=Array.isArray(cat.statuses)?cat.statuses:[];
+    (cat.concepts||[]).forEach(con=>{
+      rows+='<tr><td class="preview-concept-cell preview-concept" style="background:'+(con.color||'#fff')+';color:'+(con.fontColor||'#111111')+'">'+esc(con.name)+'</td>';
+      depts.forEach((d,i)=>{
+        const v=con.values&&con.values[d];
+        const st=v?sts.find(x=>x.id===v.statusId):null;
+        const label=st?(st.mode==='quantity' ? esc(v.quantity??'') : esc(st.name)):'';
+        const textColor=st?.textColor||'#111111';
+        const long=label.length>9?' status-long':'';
+        rows+='<td class="preview-dept'+long+'" style="background:'+(st?st.color:'#fff')+';color:'+textColor+'">'+label+'</td>';
+        if([3,7,11].includes(i))rows+='<td class="preview-sep"></td>';
+      });
+      rows+='</tr>';
+    });
+    rows+='<tr class="preview-add-row"><td class="preview-concept-cell">+ Agregar concepto</td>';
+    depts.forEach((d,i)=>{rows+='<td></td>';if([3,7,11].includes(i))rows+='<td class="preview-sep"></td>';});
+    rows+='</tr>';
+  });
+  rows+='</tbody>';
+  const colDefs='<colgroup><col class="preview-concept-col" style="width:120px">'+depts.map((d,i)=>'<col class="preview-dept-col" style="width:43px">'+([3,7,11].includes(i)?'<col class="preview-sep-col" style="width:9px">':'')).join('')+'</colgroup>';
+  const table='<table class="preview-table">'+colDefs+rows+'</table>';
+  const h='<div id="projectPreview" class="preview-screen"><div class="preview-bar"><button type="button" id="previewBackBtn" class="btn" onclick="event.preventDefault();event.stopPropagation();closeProjectPreview();">← Regresar</button><strong>Vista previa · '+esc(b.name)+'</strong><button class="btn" type="button" onclick="openExpandedPreview()">⛶ Vista previa ampliada</button><button class="btn" onclick="window.print()">🖨 Imprimir</button></div><div class="preview-paper"><h2>'+esc(b.name)+'</h2><div class="preview-sub">Control general del proyecto</div><div class="preview-grid"><div class="preview-move" id="previewMove">'+table+'</div></div><div class="preview-foot">Vista de revisión del proyecto</div></div></div>';
+  document.body.insertAdjacentHTML('beforeend',h);
+}
+
+
+</script>
+<!-- PWA_START -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('./sw.js').catch(function () {});
+  });
+}
+</script>
+<!-- PWA_END -->
+</body>
+</html>

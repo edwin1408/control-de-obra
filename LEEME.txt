@@ -1,0 +1,11 @@
+CONTROL DE OBRA — APP INSTALABLE
+
+Esta versión es una PWA. Para instalarla como aplicación en Android debe abrirse desde una dirección HTTPS (por ejemplo GitHub Pages).
+
+Pasos en el celular:
+1. Abre la dirección HTTPS de la aplicación en Chrome.
+2. Pulsa ⋮.
+3. Elige 'Instalar aplicación' o 'Añadir a pantalla de inicio'.
+4. El nombre será 'Control de Obra'.
+
+No se puede instalar una PWA completa directamente desde content:// o desde un HTML abierto en Descargas, porque el navegador no permite Service Workers en ese origen.
